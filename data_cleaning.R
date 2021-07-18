@@ -1,14 +1,14 @@
-### Intial set-up
 library(tidyverse)
 
 setwd("~/Documents/Brexit_Analysis")
 
 ### Read in raw data
-data <- read.csv("BES2019_W20_Panel_Final.csv")
+raw <- read.csv("BES_2019_W20_Panel_Final.csv")
 
 ### Keep important variables
-smaller <- data %>%
+smaller <- raw %>%
   select("id",
+         starts_with("country"),
          starts_with("euRefVoteW"), "euRefVoteAfterW20",
          starts_with("immigrationLevel"),
          starts_with("immigEcon"),
@@ -65,17 +65,50 @@ for (new_col in new_column_names) {
 }
 
 # remove old columns, reorder new ones
-smaller <- smaller %>%
+data <- smaller %>%
   select(!matches(".W(\\d+)")) %>%
   select(id, 
-         wave, 
-         gender, 
-         age, 
+         wave,
+         country,
+         gender,
+         age,
          euRefVote,
          starts_with("immig"),
          contains("change"),
          starts_with("p_"))
 
+### Find/replace certain values
+data$country[data$country == 1] <- "England"
+data$country[data$country == 2] <- "Scotland"
+data$country[data$country == 3] <- "Wales"
+
+data$immigEcon[data$immigEcon == "Bad for economy"] <- 1
+data$immigEcon[data$immigEcon == "Good for economy"] <- 7
+data$immigEcon[data$immigEcon == "Don't know"] <- -1
+data$immigEcon <- as.numeric(data$immigEcon)
+
+data$immigCultural[data$immigCultural == "Undermines cultural life"] <- 1
+data$immigCultural[data$immigCultural == "Enriches cultural life"] <- 7
+data$immigCultural[data$immigCultural == "Don't know"] <- -1
+data$immigCultural <- as.numeric(data$immigCultural)
+
+data$immigrantsWelfareState[data$immigrantsWelfareState == "Strongly disagree"] <- 1
+data$immigrantsWelfareState[data$immigrantsWelfareState == "Disagree"] <- 2
+data$immigrantsWelfareState[data$immigrantsWelfareState == "Neither agree nor disagree"] <- 3
+data$immigrantsWelfareState[data$immigrantsWelfareState == "Agree"] <- 4
+data$immigrantsWelfareState[data$immigrantsWelfareState == "Strongly agree"] <- 5
+data$immigrantsWelfareState[data$immigrantsWelfareState == "Don't know"] <- -1
+data$immigrantsWelfareState <- as.numeric(data$immigrantsWelfareState)
+
+data$changeImmig[data$changeImmig == "Getting a lot lower"] <- 1
+data$changeImmig[data$changeImmig == "Getting a little lower"] <- 2
+data$changeImmig[data$changeImmig == "Staying about the same"] <- 3
+data$changeImmig[data$changeImmig == "Getting a little higher"] <- 4
+data$changeImmig[data$changeImmig == "Getting a lot higher"] <- 5
+data$changeImmig[data$changeImmig == "Don't know"] <- -1
+data$changeImmig <- as.numeric(data$changeImmig)
+
+
 ### Save results
-write.csv(smaller, file="cleaned.csv")
+write.csv(data, file="cleaned.csv")
 
