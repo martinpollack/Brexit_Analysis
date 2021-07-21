@@ -84,12 +84,12 @@ data$country[data$country == 3] <- "Wales"
 
 data$immigEcon[data$immigEcon == "Bad for economy"] <- 1
 data$immigEcon[data$immigEcon == "Good for economy"] <- 7
-data$immigEcon[data$immigEcon == "Don't know"] <- -1
+data$immigEcon[data$immigEcon == "Don't know"] <- NA
 data$immigEcon <- as.numeric(data$immigEcon)
 
 data$immigCultural[data$immigCultural == "Undermines cultural life"] <- 1
 data$immigCultural[data$immigCultural == "Enriches cultural life"] <- 7
-data$immigCultural[data$immigCultural == "Don't know"] <- -1
+data$immigCultural[data$immigCultural == "Don't know"] <- NA
 data$immigCultural <- as.numeric(data$immigCultural)
 
 data$immigrantsWelfareState[data$immigrantsWelfareState == "Strongly disagree"] <- 1
@@ -97,7 +97,7 @@ data$immigrantsWelfareState[data$immigrantsWelfareState == "Disagree"] <- 2
 data$immigrantsWelfareState[data$immigrantsWelfareState == "Neither agree nor disagree"] <- 3
 data$immigrantsWelfareState[data$immigrantsWelfareState == "Agree"] <- 4
 data$immigrantsWelfareState[data$immigrantsWelfareState == "Strongly agree"] <- 5
-data$immigrantsWelfareState[data$immigrantsWelfareState == "Don't know"] <- -1
+data$immigrantsWelfareState[data$immigrantsWelfareState == "Don't know"] <- NA
 data$immigrantsWelfareState <- as.numeric(data$immigrantsWelfareState)
 
 data$changeImmig[data$changeImmig == "Getting a lot lower"] <- 1
@@ -105,7 +105,7 @@ data$changeImmig[data$changeImmig == "Getting a little lower"] <- 2
 data$changeImmig[data$changeImmig == "Staying about the same"] <- 3
 data$changeImmig[data$changeImmig == "Getting a little higher"] <- 4
 data$changeImmig[data$changeImmig == "Getting a lot higher"] <- 5
-data$changeImmig[data$changeImmig == "Don't know"] <- -1
+data$changeImmig[data$changeImmig == "Don't know"] <- NA
 data$changeImmig <- as.numeric(data$changeImmig)
 
 
