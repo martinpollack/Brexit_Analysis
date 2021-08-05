@@ -82,6 +82,14 @@ data$country[data$country == 1] <- "England"
 data$country[data$country == 2] <- "Scotland"
 data$country[data$country == 3] <- "Wales"
 
+data$immigrationLevel[data$immigrationLevel == "Decreased a lot"] <- 1
+data$immigrationLevel[data$immigrationLevel == "Decreased a little"] <- 2
+data$immigrationLevel[data$immigrationLevel == "Left the same as it is now"] <- 3
+data$immigrationLevel[data$immigrationLevel == "Increased a little"] <- 4
+data$immigrationLevel[data$immigrationLevel == "Increased a lot"] <- 5
+data$immigrationLevel[data$immigrationLevel == "Don't know"] <- NA
+data$immigrationLevel <- as.numeric(data$immigrationLevel)
+
 data$immigEcon[data$immigEcon == "Bad for economy"] <- 1
 data$immigEcon[data$immigEcon == "Good for economy"] <- 7
 data$immigEcon[data$immigEcon == "Don't know"] <- NA
