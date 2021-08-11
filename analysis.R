@@ -33,9 +33,60 @@ data$AIS = apply(data[(c("Z_Econ", "Z_Cult", "Z_Welf", "Z_Lvl"))],
                  na.rm=T)
 
 ### Look at aggregate statistics for each participant
-data %>% 
+
+# Calculate AIS standard deviation by id
+agg = data %>% 
   group_by(id) %>%
-  count() %>%
-  ggplot(aes(n)) + 
-  geom_histogram(binwidth=1) + 
-  labs(x="# of waves participated")
+  summarise(AIS_sd=sd(AIS, na.rm=T),
+            num_waves=n())
+
+# Calculate the percentage of times an id switched, and how long they were in each camp
+data$newRefVote = case_when(data$euRefVote == "Rejoin the EU" ~ "Stay/remain in the EU",
+                            data$euRefVote == "Stay out of the EU" ~ "Leave the EU",
+                            TRUE ~ data$euRefVote)
+
+for (id_num in agg$id) {
+  subset = data %>%
+    filter(id == id_num, (newRefVote == "Stay/remain in the EU") | (newRefVote == "Leave the EU")) %>%
+    arrange(wave) %>%
+    select(newRefVote)
+  
+  n = nrow(subset)
+  
+  if (n >= 2) {
+    
+    switched = 0
+    stay = 0
+    leave = 0
+    
+    last_ref = subset[[1, 1]]
+    if (last_ref == "Stay/remain in the EU") {
+      stay = stay + 1
+    }
+    else {
+      leave = leave + 1
+    }
+
+    for (cur_ref in subset[-1, 1]) {
+      if (cur_ref != last_ref) {
+        switched = switched + 1
+      }
+      
+      if (cur_ref == "Stay/remain in the EU") {
+        stay = stay + 1
+      }
+      else {
+        leave = leave + 1
+      }
+      
+      last_ref = cur_ref
+    }
+    
+    agg[agg$id == id_num, "Switch_prop"] = switched / (n - 1)
+    agg[agg$id == id_num, "Stay_prop"] = stay / n
+    agg[agg$id == id_num, "Leave_prop"] = leave / n
+      
+  }
+    
+}
+  
