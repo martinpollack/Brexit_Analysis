@@ -38,6 +38,7 @@ data$AIS = apply(data[(c("Z_Econ", "Z_Cult", "Z_Welf", "Z_Lvl"))],
 agg = data %>% 
   group_by(id) %>%
   summarise(AIS_sd=sd(AIS, na.rm=T),
+            AIS_mean=mean(AIS, na.rm=T),
             num_waves=n())
 
 # Calculate the percentage of times an id switched, and how long they were in each camp
