@@ -40,7 +40,7 @@ ui <- navbarPage("Brexit Data Visualization",
                          #Type of scatterplot and conditional faceting
                          radioButtons("ScatterPlotType", label="Type of Plot", inline=TRUE,
                                       choices=c("plotly" = "plotly", "ggplot" = "ggplot"),
-                                      selected="ggplot"),
+                                      selected="plotly"),
 
                          
                          #Color by and Success
@@ -150,7 +150,7 @@ server <- function(input, output, clientData, session) {
                                  filteredGTD$wave <= input$ScatterYear[2], ]
     
     
-    select(filteredGTD,c("wave","NewEncode","n","Percentage"))
+    select(filteredGTD,c("wave","NewEncode","Count","Percentage"))
   })
   
   prepareCurrentData <- reactive({
@@ -217,39 +217,43 @@ server <- function(input, output, clientData, session) {
 
     #Preparing titles for axes
     XaxisTitle = "Wave"
-
-
-    YaxisTitle = input$ScatterXaxis
+    YaxisTitle = input$ScatterYaxis
     
     print(input$ScatterYaxis)
     print(input$ScatterXaxis)
     
     if (input$ScatterXaxis != "all") {
-      currentVis <- plot_ly(currentData, x = ~wave, y = ~display, text =~wave,  type = 'scatter',mode = 'lines', 
+      voter_type = case_when(input$ScatterXaxis=="AS" ~ "Always Stay",
+                             input$ScatterXaxis=="AL" ~ "Always Leave",
+                             input$ScatterXaxis=="SS" ~ "Switch to Stay",
+                             input$ScatterXaxis=="SL" ~ "Switch Leave")
+      
+      currentVis <- plot_ly(currentData, x = ~wave, y = ~display, text =~wave,  name=voter_type, type = 'scatter',mode = 'lines', line=list(color="black"),
                           hovertemplate = ~paste("Wave",': %{text}<br>',
                                                  XaxisTitle,'<br>= %{x}<br>',
-                                                 YaxisTitle,'<br>= %{y}<br>'), marker = list(size = 10),
+                                                 YaxisTitle,'<br>= %{y}<br>'), marker = list(size = 10, color="black"),
                           showlegend = FALSE)
+      currentVis <- currentVis %>% layout(title=voter_type)
     }
     
     else {
       dat = currentData[, c("wave", "NewEncode", "display")] %>% pivot_wider(names_from=NewEncode, values_from=display)
       
-      currentVis <- plot_ly(dat, x=~wave, y=~AS, text=~wave, name="Always Stay", type = 'scatter', mode = 'lines', 
+      currentVis <- plot_ly(dat, x=~wave, y=~AL, text=~wave, name="Always Leave", type = 'scatter', mode = 'lines', 
                             hovertemplate = ~paste("Wave",': %{text}<br>',
                                                    XaxisTitle,'<br>= %{x}<br>',
                                                    YaxisTitle,'<br>= %{y}<br>'), marker = list(size = 10),
                             showlegend = TRUE)
       
-      #print(dat)
-      currentVis <- currentVis %>% add_trace(y=~AL, text=~wave, name="Always Leave", mode="lines")
-      currentVis <- currentVis %>% add_trace(y=~SS, text=~wave, name="Switch to Stay", mode="lines")
-      currentVis <- currentVis %>% add_trace(y=~SL, text=~wave, name="Swith to Leave", mode="lines")
+      currentVis <- currentVis %>% add_trace(y=~AS, text=~wave, name="Always Stay", mode="lines")
+      currentVis <- currentVis %>% add_trace(y=~SL, text=~wave, name="Switch to Leave", mode="lines")
+      currentVis <- currentVis %>% add_trace(y=~SS, text=~wave, name="Swith to Stay", mode="lines")
     }
-    a <- list(title = XaxisTitle)
-    b <- list(title = YaxisTitle)
     
     #Sets titles for axes
+    a <- list(title = XaxisTitle)
+    b <- list(title = YaxisTitle)
+
     currentVis <- currentVis %>% layout(xaxis = a, yaxis = b)  
     
     #Option: color by
@@ -270,31 +274,46 @@ server <- function(input, output, clientData, session) {
     currentData <- prepareCurrentData()  
 
     #Preparing titles for axes
-    XaxisTitle = input$ScatterXaxis
-    if(input$Scatterlogx) XaxisTitle <- paste("Log of", XaxisTitle)
-    
+    XaxisTitle = "Wave"
     YaxisTitle = input$ScatterYaxis
-    if(input$Scatterlogy) YaxisTitle <- paste("Log of", YaxisTitle)
     
-    currentPlot <- ggplot(data=currentData, aes(x=Xvar, y=Yvar)) + 
-      geom_point(size=4) + theme_bw() +
-      xlab(XaxisTitle) + ylab(YaxisTitle) +
-      theme(axis.title=element_text(size=18)) +
-      scale_x_continuous(labels=comma) + scale_y_continuous(labels=comma)  +
-      scale_colour_manual(values=customColors)
+    voter_type = case_when(input$ScatterXaxis=="AS" ~ "Always Stay",
+                           input$ScatterXaxis=="AL" ~ "Always Leave",
+                           input$ScatterXaxis=="SS" ~ "Switch to Stay",
+                           input$ScatterXaxis=="SL" ~ "Switch Leave")
+    
+    if (input$ScatterXaxis != "all") {
+      currentVis <- ggplot(currentData, aes(x=wave, y=display)) +
+        geom_line(size=1) + geom_point(size=4)
+        theme_bw() + 
+        xlab(XaxisTitle) + ylab(YaxisTitle) + 
+        theme(axis.title=element_text(size=18)) + 
+        labs(title=voter_type)
+    }
+    else {
+      dat = currentData
+      levels(dat$NewEncode) = c("Always Leave", "Always Stay", "Switch to Leave", "Switch to Stay")
+      
+      currentVis <- ggplot(dat, aes(x=wave, y=display, color=NewEncode)) +
+        geom_line(size=1) + geom_point(size=4) + 
+        theme_bw() + 
+        xlab(XaxisTitle) + ylab(YaxisTitle) + 
+        theme(axis.title=element_text(size=18)) + 
+        scale_colour_manual(values=c("blue", "orange", "green", "red"))
+    }
     
     #Option: Facets
-    if(input$ScatterFacetby != "none" && length(currentData$Year) != 0){
-      currentPlot <- currentPlot + facet_wrap(~currentFacet, ncol=4) + 
-        theme(legend.position="right", strip.text=element_text(size=18))
-    }
+    # if(input$ScatterFacetby != "none" && length(currentData$Year) != 0){
+    #   currentPlot <- currentPlot + facet_wrap(~currentFacet, ncol=4) +
+    #     theme(legend.position="right", strip.text=element_text(size=18))
+    # }
     
     #Option: Add color by region
-    if(input$ScatterColorby != "none"){
-      currentPlot <- currentPlot + aes(colour=Color) +
-        scale_fill_manual(values=customColors)
-    }
-    currentPlot
+    # if(input$ScatterColorby != "none"){
+    #   currentPlot <- currentPlot + aes(colour=Color) +
+    #     scale_fill_manual(values=customColors)
+    # }
+    currentVis
   })
   
   output$ScatterNotes <- renderText({

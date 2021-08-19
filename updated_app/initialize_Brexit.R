@@ -25,8 +25,8 @@ agg1 <- BXTdata %>%
 
 agg2 <- BXTdata %>% 
   group_by(wave,NewEncode) %>%
-  summarise(n = n()) %>%
-  mutate(Percentage = prop.table(n/sum(n)))
+  summarise(Count = n()) %>%
+  mutate(Percentage = prop.table(Count/sum(Count)))
 
 
 
@@ -49,7 +49,7 @@ XAxisOptions <- c("All" = "all",
 
 #Temporal display options
 TemporalOptions <- c("Percentage" = "Percentage",
-               "Count" = "n")
+               "Count" = "Count")
 
 
 
