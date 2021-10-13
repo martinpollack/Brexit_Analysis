@@ -42,9 +42,12 @@ ui <- navbarPage("Brexit Data Visualization",
                                       choices=c("plotly" = "plotly", "ggplot" = "ggplot"),
                                       selected="plotly"),
 
+                         #Filter by variables
+                         fluidRow(column(6, selectInput("ScatterFilterby", "Filter By", choices = FilterOptions))),
+                         
                          
                          #Color by and Success
-                         fluidRow(column(6, selectInput("ScatterColorby", "Color By", choices = colorOptions))),
+                         #fluidRow(column(6, selectInput("ScatterColorby", "Color By", choices = colorOptions))),
                          
                          #Sliders for wave
                          
@@ -140,9 +143,34 @@ server <- function(input, output, clientData, session) {
     fixedVariables <- c("Year", "NumCode", "Region", "Religion")
     
     #Filtering the GTDdata
-    filteredGTD <- GTDdata
+    BXTDates <- BXTDates
     
     print("Step 2")
+    
+    #Option:Filter By
+    if(input$ScatterFilterby != "all"){
+      #filteredGTD <- select(filteredGTD,c("date","NewVote","wave","Count",input$ScatterFilterby))   
+    }
+    else{
+      filteredGTD <- GTDdata %>% 
+        group_by(wave,NewVote) %>%
+        summarise(TotalLeave=sum(WeightedNewLeaveVote,na.rm=T), 
+                  TotalStay=sum(WeightedNewStayVote,na.rm=T),
+                  AIS_mean=mean(AIS, na.rm=T),
+                  AIS_sd=sd(AIS, na.rm=T)) %>%
+        mutate(TotalPar = TotalLeave + TotalStay)%>%
+        mutate(Percentage = prop.table(TotalPar/sum(TotalPar)))
+      
+      filteredGTD <- merge(x = filteredGTD, y = BXTDates, by = "wave", all.x = TRUE)
+      
+      filteredGTD <- dplyr::arrange(filteredGTD,wave,NewVote)
+    }
+    
+    ##Rename TotalPar as Count
+    colnames(filteredGTD)[which(names(filteredGTD) == "TotalPar")] <- "Count"
+    
+    ##Rename percentage as proportion
+    colnames(filteredGTD)[which(names(filteredGTD) == "Percentage")] <- "Proportion"
     
     #Option: Colors
     #if(input$ScatterColorby != "none"){
@@ -159,7 +187,7 @@ server <- function(input, output, clientData, session) {
                                  filteredGTD$date <= input$ScatterYear[2], ]
     
     
-    select(filteredGTD,c("date","NewEncode","wave","Count","Percentage"))
+    select(filteredGTD,c("date","NewVote","wave","Count","Proportion"))
   })
   
   prepareCurrentData <- reactive({
@@ -170,7 +198,7 @@ server <- function(input, output, clientData, session) {
     currentData <- GTDandGM
     
     if (input$ScatterXaxis != "all") {
-      currentData <- currentData[currentData$NewEncode==input$ScatterXaxis,]
+      currentData <- currentData[currentData$NewVote==input$ScatterXaxis,]
     }
     
     #Option: Colors
@@ -188,8 +216,6 @@ server <- function(input, output, clientData, session) {
     #if(length(currentData$Wave) == 0) currentData$Yvar <- currentData$Yvar + 0
     
     currentData$display <- currentData[,input$ScatterYaxis]
-    
-    
     
     currentData
   })
@@ -225,17 +251,15 @@ server <- function(input, output, clientData, session) {
     print(currentData[1,])
 
     #Preparing titles for axes
-    XaxisTitle = "date"
+    XaxisTitle = "Date"
     YaxisTitle = input$ScatterYaxis
     
     print(input$ScatterYaxis)
     print(input$ScatterXaxis)
     
     if (input$ScatterXaxis != "all") {
-      voter_type = case_when(input$ScatterXaxis=="AS" ~ "Always Stay",
-                             input$ScatterXaxis=="AL" ~ "Always Leave",
-                             input$ScatterXaxis=="SS" ~ "Switch to Stay",
-                             input$ScatterXaxis=="SL" ~ "Switch Leave")
+      voter_type = case_when(input$ScatterXaxis=="Stay" ~ "Stay",
+                             input$ScatterXaxis=="Leave" ~ "Leave")
       
       currentVis <- plot_ly(currentData, x = ~date, y = ~display, text =~wave,  name=voter_type, type = 'scatter',mode = 'lines', line=list(color="black"),
                           hovertemplate = ~paste("Wave",': %{text}<br>',
@@ -246,17 +270,15 @@ server <- function(input, output, clientData, session) {
     }
     
     else {
-      dat = currentData[, c("date", "NewEncode", "display", "wave")] %>% pivot_wider(names_from=NewEncode, values_from=display)
+      dat = currentData[, c("date", "NewVote", "display", "wave")] %>% pivot_wider(names_from=NewVote, values_from=display)
       
-      currentVis <- plot_ly(dat, x=~date, y=~AL, text=~wave, name="Always Leave", type = 'scatter', mode = 'lines', 
+      currentVis <- plot_ly(dat, x=~date, y=~Leave, text=~wave, name="Leave", type = 'scatter', mode = 'lines', 
                             hovertemplate = ~paste("Wave",': %{text}<br>',
                                                    XaxisTitle,'<br>= %{x}<br>',
                                                    YaxisTitle,'<br>= %{y}<br>'), marker = list(size = 10),
                             showlegend = TRUE)
       
-      currentVis <- currentVis %>% add_trace(y=~AS, text=~wave, name="Always Stay", mode="lines")
-      currentVis <- currentVis %>% add_trace(y=~SL, text=~wave, name="Switch to Leave", mode="lines")
-      currentVis <- currentVis %>% add_trace(y=~SS, text=~wave, name="Swith to Stay", mode="lines")
+      currentVis <- currentVis %>% add_trace(y=~Stay, text=~wave, name="Stay", mode="lines")
     }
     
     #Sets titles for axes
@@ -286,10 +308,8 @@ server <- function(input, output, clientData, session) {
     XaxisTitle = "Date"
     YaxisTitle = input$ScatterYaxis
     
-    voter_type = case_when(input$ScatterXaxis=="AS" ~ "Always Stay",
-                           input$ScatterXaxis=="AL" ~ "Always Leave",
-                           input$ScatterXaxis=="SS" ~ "Switch to Stay",
-                           input$ScatterXaxis=="SL" ~ "Switch Leave")
+    voter_type = case_when(input$ScatterXaxis=="Stay" ~ "Stay",
+                           input$ScatterXaxis=="Leave" ~ "Leave")
     
     if (input$ScatterXaxis != "all") {
       currentVis <- ggplot(currentData, aes(x=date, y=display)) +
@@ -301,9 +321,9 @@ server <- function(input, output, clientData, session) {
     }
     else {
       dat = currentData
-      levels(dat$NewEncode) = c("Always Leave", "Always Stay", "Switch to Leave", "Switch to Stay")
+      levels(dat$NewVote) = c("Leave", "Stay")
       
-      currentVis <- ggplot(dat, aes(x=date, y=display, color=NewEncode)) +
+      currentVis <- ggplot(dat, aes(x=date, y=display, color=NewVote)) +
         geom_line(size=1) + geom_point(size=4) + 
         theme_bw() + 
         xlab(XaxisTitle) + ylab(YaxisTitle) + 
