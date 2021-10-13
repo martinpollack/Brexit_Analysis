@@ -32,6 +32,14 @@ data$AIS = apply(data[(c("Z_Econ", "Z_Cult", "Z_Welf", "Z_Lvl"))],
                  mean,
                  na.rm=T)
 
+### Get weighted AIS score
+data$AIS.wt <- data$wt * data$AIS
+
+### Look at aggregate statistics for each year
+data$newRefVote = case_when(data$euRefVote == "Rejoin the EU" ~ "Stay/remain in the EU",
+                            data$euRefVote == "Stay out of the EU" ~ "Leave the EU",
+                            TRUE ~ data$euRefVote)
+
 ### Look at aggregate statistics for each participant
 
 # Calculate AIS standard deviation by id
@@ -42,10 +50,6 @@ agg = data %>%
             num_waves=n())
 
 # Calculate the percentage of times an id switched, and how long they were in each camp
-data$newRefVote = case_when(data$euRefVote == "Rejoin the EU" ~ "Stay/remain in the EU",
-                            data$euRefVote == "Stay out of the EU" ~ "Leave the EU",
-                            TRUE ~ data$euRefVote)
-
 for (id_num in agg$id) {
   subset = data %>%
     filter(id == id_num, (newRefVote == "Stay/remain in the EU") | (newRefVote == "Leave the EU")) %>%

@@ -8,6 +8,28 @@ raw <- read.csv("BES_2019_W20_Panel_Final.csv")
 ### Keep important variables
 smaller <- raw %>%
   select("id",
+         # get proper weights
+         "wt_full_W1",
+         "wt_full_W2",
+         "wt_full_W3",
+         "wt_full_W4",
+         "wt_full_W5",
+         "wt_new_W6",
+         "wt_new_W7",
+         "wt_new_W8",
+         "wt_new_W9",
+         "wt_new_W10",
+         "wt_new_W11",
+         "wt_new_W12",
+         "wt_new_W13_result",
+         "wt_new_W14",
+         "wt_new_W15",
+         "wt_new_W16",
+         "wt_new_W17",
+         "wt_new_W18",
+         "wt_new_W19_result",
+         "wt_new_W20",
+         # get variables
          starts_with("country"),
          starts_with("euRefVoteW"), "euRefVoteAfterW20",
          starts_with("immigrationLevel"),
@@ -50,8 +72,9 @@ colnames(smaller)[colnames(smaller)=="euRefVoteAfterW20"] <- "euRefVoteW20"
 col_names = colnames(smaller)
 
 # get new column names
-new_column_names <- col_names[!((col_names %in% c("id", "gender", "wave")) | (grepl("^p_past_vote", col_names)))] %>%
+new_column_names <- col_names[!((col_names %in% c("id", "gender", "wave")) | (grepl("^p_past_vote", col_names)) | (grepl("^wt_", col_names)))] %>%
   str_replace("W(\\d+)", "") %>%
+  append("wt") %>%
   unique()
 
 # fill in new columns
@@ -60,7 +83,12 @@ for (new_col in new_column_names) {
   wave_nums <- parse_number(col_names[grepl(paste0("^", new_col), col_names)])
   
   for (wave in wave_nums) {
-    smaller[smaller$wave == wave, new_col] <- smaller[smaller$wave == wave, paste0(new_col, "W", wave)]
+    if (new_col != "wt") {
+      smaller[smaller$wave == wave, new_col] <- smaller[smaller$wave == wave, paste0(new_col, "W", wave)]
+    }
+    else {
+      smaller[smaller$wave == wave, new_col] <- select(smaller, contains(paste0("W", wave)))[smaller$wave == wave,1]
+    }
   }
 }
 
@@ -69,6 +97,7 @@ data <- smaller %>%
   select(!matches(".W(\\d+)")) %>%
   select(id, 
          wave,
+         wt,
          country,
          gender,
          age,

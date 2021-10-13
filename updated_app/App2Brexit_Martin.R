@@ -59,7 +59,7 @@ ui <- navbarPage("Brexit Data Visualization",
                                      "Dates of Survey:",
                                      min = as.Date("2014-01-01","%Y-%m-%d"),
                                      max = as.Date("2020-12-31","%Y-%m-%d"),
-                                     value=as.Date(c("2016-12-01","2020-12-31")),
+                                     value=as.Date(c("2014-01-01","2020-12-31")),
                                      timeFormat="%Y-%m-%d"),
                          
                          HTML("Variable Descriptions for the app: <a href='http://web.grinnell.edu/individuals/kuipers/stat2labs/Handouts/GlobalTerrorism/GTDVariableDescription.pdf'>Variable Descriptions</a>")
@@ -272,13 +272,19 @@ server <- function(input, output, clientData, session) {
     else {
       dat = currentData[, c("date", "NewVote", "display", "wave")] %>% pivot_wider(names_from=NewVote, values_from=display)
       
-      currentVis <- plot_ly(dat, x=~date, y=~Leave, text=~wave, name="Leave", type = 'scatter', mode = 'lines', 
-                            hovertemplate = ~paste("Wave",': %{text}<br>',
-                                                   XaxisTitle,'<br>= %{x}<br>',
-                                                   YaxisTitle,'<br>= %{y}<br>'), marker = list(size = 10),
-                            showlegend = TRUE)
+      currentVis <- plot_ly() %>% add_trace(data=dat, x=~date, y=~Leave, text=~wave, name="Leave", 
+                                            type = 'scatter', mode = 'lines+markers', marker=list(size=10),
+                                            hovertemplate = ~paste("Wave",': %{text}<br>',
+                                                                   XaxisTitle,'<br>= %{x}<br>',
+                                                                   YaxisTitle,'<br>= %{y}<br>'),
+                                            showlegend = TRUE)
       
-      currentVis <- currentVis %>% add_trace(y=~Stay, text=~wave, name="Stay", mode="lines")
+      currentVis <- currentVis %>% add_trace(data=dat, x=~date, y=~Stay, text=~wave, name="Stay",
+                                             type="scatter", mode="lines+markers", marker=list(size=10),
+                                             hovertemplate = ~paste("Wave",': %{text}<br>',
+                                                                    XaxisTitle,'<br>= %{x}<br>',
+                                                                    YaxisTitle,'<br>= %{y}<br>'),
+                                             showlegend = TRUE)
     }
     
     #Sets titles for axes
@@ -286,6 +292,13 @@ server <- function(input, output, clientData, session) {
     b <- list(title = YaxisTitle)
 
     currentVis <- currentVis %>% layout(xaxis = a, yaxis = b)  
+    
+    #add horizontal line
+    lines <- data.frame(date=rep("2014-01-01", 100), y=seq(0.4,0.6,length.out=100))
+    currentVis <- currentVis %>% 
+      add_trace(data=lines, x=~date, y=~y, 
+                hovertemplate="%{x}",
+                type="scatter", mode="lines", name="Event")
     
     #Option: color by
     #if(input$ScatterColorby != "none"){
