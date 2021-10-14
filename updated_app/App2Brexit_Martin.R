@@ -145,7 +145,7 @@ server <- function(input, output, clientData, session) {
     #Filtering the GTDdata
     BXTDates <- BXTDates
     
-    print("Step 2")
+
     
     #Option:Filter By
     if(input$ScatterFilterby != "all"){
@@ -197,6 +197,8 @@ server <- function(input, output, clientData, session) {
     # data, so the plotly functions can all use the same names
     currentData <- GTDandGM
     
+    
+    
     if (input$ScatterXaxis != "all") {
       currentData <- currentData[currentData$NewVote==input$ScatterXaxis,]
     }
@@ -247,25 +249,23 @@ server <- function(input, output, clientData, session) {
     
     currentData <- prepareCurrentData()
     
-    print("Step 1")
-    print(currentData[1,])
-
     #Preparing titles for axes
     XaxisTitle = "Date"
     YaxisTitle = input$ScatterYaxis
     
-    print(input$ScatterYaxis)
-    print(input$ScatterXaxis)
-    
+
     if (input$ScatterXaxis != "all") {
       voter_type = case_when(input$ScatterXaxis=="Stay" ~ "Stay",
                              input$ScatterXaxis=="Leave" ~ "Leave")
       
-      currentVis <- plot_ly(currentData, x = ~date, y = ~display, text =~wave,  name=voter_type, type = 'scatter',mode = 'lines', line=list(color="black"),
+      currentVis <- plot_ly(currentData, x=~date, y=~display, text=~date,  name=voter_type, type = 'scatter',mode = 'lines', line=list(color="orange"),
                           hovertemplate = ~paste("Wave",': %{text}<br>',
                                                  XaxisTitle,'<br>= %{x}<br>',
-                                                 YaxisTitle,'<br>= %{y}<br>'), marker = list(size = 10, color="black"),
+                                                 YaxisTitle,'<br>= %{y}<br>'), marker = list(size = 10, color="orange"),
                           showlegend = FALSE)
+      
+
+
       currentVis <- currentVis %>% layout(title=voter_type)
     }
     
@@ -287,18 +287,64 @@ server <- function(input, output, clientData, session) {
                                              showlegend = TRUE)
     }
     
+    
+    #add horizontal line
+    event1 <- "2016-06-23"
+    event2 <- "2017-03-29"
+    event3 <- "2020-02-01"
+    
+    #Define the Y-axis range of event according to user selection of Count/Proportion
+    
+    if(input$ScatterYaxis=="Proportion")
+      {
+      y_min = 0.4
+      y_max = 0.6
+    }
+    else
+      {
+      y_min = 0
+      y_max = 12000
+    }
+    
+    #If date1 is included in the user selection of dates
+    if(event1 >= input$ScatterYear[1] & event1 <= input$ScatterYear[2])
+    {    
+      
+      lines <- data.frame(date=rep(event1, 100), y=seq(y_min,y_max,length.out=100))
+      currentVis <- currentVis %>% 
+        add_trace(data=lines, x=~date, y=~y, 
+                  hovertemplate= ~paste("Event1",': %{x}','<br>UK held a referendum<br>'),
+                  type="scatter", mode="lines", name="Event1")
+    }
+    
+    #If event2 is included in the user selection of dates
+    if(event2 >= input$ScatterYear[1] & event2 <= input$ScatterYear[2])
+    {    
+      
+      lines <- data.frame(date=rep(event2, 100), y=seq(y_min,y_max,length.out=100))
+      currentVis <- currentVis %>% 
+        add_trace(data=lines, x=~date, y=~y, 
+                  hovertemplate= ~paste("Event2",': %{x}','<br>UK notified the EU of its decision to leave<br>'),
+                  type="scatter", mode="lines", name="Event2")
+    }
+    
+    #If event3 is included in the user selection of dates
+    if(event3 >= input$ScatterYear[1] & event3 <= input$ScatterYear[2])
+    {    
+      
+      lines <- data.frame(date=rep(event3, 100), y=seq(y_min,y_max,length.out=100))
+      currentVis <- currentVis %>% 
+        add_trace(data=lines, x=~date, y=~y, 
+                  hovertemplate= ~paste("Event3",': %{x}','<br>UK withdrawals from the European Union<br>'),
+                  type="scatter", mode="lines", name="Event3")
+    }    
+
+    
     #Sets titles for axes
     a <- list(title = XaxisTitle)
     b <- list(title = YaxisTitle)
 
     currentVis <- currentVis %>% layout(xaxis = a, yaxis = b)  
-    
-    #add horizontal line
-    lines <- data.frame(date=rep("2014-01-01", 100), y=seq(0.4,0.6,length.out=100))
-    currentVis <- currentVis %>% 
-      add_trace(data=lines, x=~date, y=~y, 
-                hovertemplate="%{x}",
-                type="scatter", mode="lines", name="Event")
     
     #Option: color by
     #if(input$ScatterColorby != "none"){

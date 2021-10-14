@@ -3,7 +3,7 @@ library(readr)
 
 #----------------------Load Dataset----------------------#
 #data_path = "Insert datapath"
-data_path = "~/Documents/Brexit_Analysis/updated_app/"
+data_path = "~/Brexit Analysis/Brexit Shiny/"
 
 BXTdata <- read.csv(paste0(data_path, "processed_cross_sectional_data.csv"))
 
