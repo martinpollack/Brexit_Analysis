@@ -83,6 +83,53 @@ agg1 <- BXTdata %>%
        mutate(TotalPar = TotalLeave + TotalStay)%>%
        mutate(Percentage = prop.table(TotalPar/sum(TotalPar))) 
 
+agg1 <- BXTdata %>% 
+  group_by(wave,NewVote) %>%
+  summarise(TotalLeave=sum(WeightedNewLeaveVote,na.rm=T), 
+            TotalStay=sum(WeightedNewStayVote,na.rm=T),
+            AIS_mean=mean(AIS, na.rm=T),
+            AIS_sd=sd(AIS, na.rm=T)) %>%
+  mutate(TotalPar = TotalLeave + TotalStay)%>%
+  mutate(Percentage = prop.table(TotalPar/sum(TotalPar)))
+
+agg11 <- agg1[agg1$NewVote=="Leave",]
+agg11 <- dplyr::arrange(agg11,wave,NewVote)
+agg12 <- agg1[agg1$NewVote=="Stay",]
+agg12 <- dplyr::arrange(agg12,wave,NewVote)
+
+library(DataCombine)
+
+
+# Find percentage change from two periods before
+Data <- data.frame(select(agg11, wave, TotalPar))
+
+Out <- PercChange(Data, Var = 'TotalPar',
+                  type = 'proportion',
+                  NewVar = 'PercentChange',
+                  slideBy = -1)
+
+agg11 <- merge(x = agg11, y = select(Out,wave,PercentChange), by = "wave", all.x = TRUE)
+
+agg11 <- agg11 %>% mutate(ChangeInPercent = Percentage - lag(Percentage,1))
+agg11 <- agg11 %>% mutate(TotalChange = TotalPar - lag(TotalPar,1))
+
+
+Data <- data.frame(select(agg12, wave, TotalPar))
+
+Out <- PercChange(Data, Var = 'TotalPar',
+                  type = 'proportion',
+                  NewVar = 'PercentChange',
+                  slideBy = -1)
+
+agg12 <- merge(x = agg12, y = select(Out,wave,PercentChange), by = "wave", all.x = TRUE)
+
+agg12 <- agg12 %>% mutate(ChangeInPercent = Percentage - lag(Percentage,1))
+agg12 <- agg12 %>% mutate(TotalChange = TotalPar - lag(TotalPar,1))
+
+agg1 <- rbind(agg11, agg12) 
+
+
+
 aggData <- dplyr::arrange(agg1,wave,NewVote)
 
 ##Rename TotalPar as Count
@@ -120,7 +167,11 @@ XAxisOptions <- c("All" = "all",
 
 #Temporal display options
 TemporalOptions <- c("Proportion" = "Proportion",
-               "Count" = "Count")
+               "Count" = "Count",
+               "Percent Change" = "PercentChange",
+               "Change in Percent"  = "ChangeInPercent",
+               "Total Change"  = "TotalChange"
+               )
 
 FilterOptions <- c("All" = "all",
                    "Gender" = "Gender",

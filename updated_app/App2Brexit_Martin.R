@@ -5,6 +5,7 @@ library(tidyr)
 library(plyr)
 library(scales)
 library(plotly)
+library(DataCombine)
 
 #setwd("~/Brexit_Analysis/Brexit Shiny")
 source('initialize_Brexit_Martin.R')
@@ -163,8 +164,44 @@ server <- function(input, output, clientData, session) {
       
       filteredGTD <- merge(x = filteredGTD, y = BXTDates, by = "wave", all.x = TRUE)
       
-      filteredGTD <- dplyr::arrange(filteredGTD,wave,NewVote)
+      #Compute change in percent/Percent Change/Total Change
+      agg11 <- filteredGTD[filteredGTD$NewVote=="Leave",]
+      agg11 <- dplyr::arrange(agg11,wave,NewVote)
+      agg12 <- filteredGTD[filteredGTD$NewVote=="Stay",]
+      agg12 <- dplyr::arrange(agg12,wave,NewVote)
+      
+      # Find percentage change from one periods before
+      Data <- data.frame(select(agg11, wave, TotalPar))
+      
+      Out <- PercChange(Data, Var = 'TotalPar',
+                        type = 'proportion',
+                        NewVar = 'PercentChange',
+                        slideBy = -1)
+      
+      agg11 <- merge(x = agg11, y = select(Out,wave,PercentChange), by = "wave", all.x = TRUE)
+      
+      agg11 <- agg11 %>% mutate(ChangeInPercent = Percentage - lag(Percentage,1))
+      agg11 <- agg11 %>% mutate(TotalChange = TotalPar - lag(TotalPar,1))
+      
+      
+      Data <- data.frame(select(agg12, wave, TotalPar))
+      
+      Out <- PercChange(Data, Var = 'TotalPar',
+                        type = 'proportion',
+                        NewVar = 'PercentChange',
+                        slideBy = -1)
+      
+      agg12 <- merge(x = agg12, y = select(Out,wave,PercentChange), by = "wave", all.x = TRUE)
+      
+      agg12 <- agg12 %>% mutate(ChangeInPercent = Percentage - lag(Percentage,1))
+      agg12 <- agg12 %>% mutate(TotalChange = TotalPar - lag(TotalPar,1))
+      
+      filteredGTD <- rbind(agg11, agg12) 
+      
+      
     }
+    filteredGTD <- dplyr::arrange(filteredGTD,wave,NewVote)
+    
     
     ##Rename TotalPar as Count
     colnames(filteredGTD)[which(names(filteredGTD) == "TotalPar")] <- "Count"
@@ -187,7 +224,7 @@ server <- function(input, output, clientData, session) {
                                  filteredGTD$date <= input$ScatterYear[2], ]
     
     
-    select(filteredGTD,c("date","NewVote","wave","Count","Proportion"))
+    select(filteredGTD,c("date","NewVote","wave","Count","Proportion", "PercentChange", "ChangeInPercent", "TotalChange"))
   })
   
   prepareCurrentData <- reactive({
@@ -253,6 +290,8 @@ server <- function(input, output, clientData, session) {
     XaxisTitle = "Date"
     YaxisTitle = input$ScatterYaxis
     
+    
+    
 
     if (input$ScatterXaxis != "all") {
       voter_type = case_when(input$ScatterXaxis=="Stay" ~ "Stay",
@@ -300,11 +339,27 @@ server <- function(input, output, clientData, session) {
       y_min = 0.4
       y_max = 0.6
     }
-    else
+    else if(input$ScatterYaxis=="Count")
       {
       y_min = 0
       y_max = 12000
     }
+    else if(input$ScatterYaxis=="PercentChange")
+    {
+      y_min = -0.6
+      y_max = 0.6
+    }
+    else if(input$ScatterYaxis=="ChangeInPercent")
+    {
+      y_min = -0.1
+      y_max = 0.1
+    }
+    else if(input$ScatterYaxis=="TotalChange")
+    {
+      y_min = -6000
+      y_max = 6000
+    }
+    
     
     #If date1 is included in the user selection of dates
     if(event1 >= input$ScatterYear[1] & event1 <= input$ScatterYear[2])
