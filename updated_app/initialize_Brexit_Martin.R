@@ -149,9 +149,12 @@ BXTDates$date <- as.Date(BXTDates$date, format = "%m/%d/%Y")
 #GTDdata <- merge(x = aggData, y = BXTDates, by = "wave", all.x = TRUE)
 GTDdata <- merge(x = BXTdata, y = BXTDates, by = "wave", all.x = TRUE)
 
-#----------------------Compute Percentage Change/Percent Change/Total Counts----------------------#
+#----------------------Compute AgeGroup----------------------#
 
-
+GTDdata$AgeGroup <- ifelse(GTDdata$age <=35 , "Age19-35",
+                           ifelse(GTDdata$age >35 & GTDdata$age <=45, "Age36-45",
+                                  ifelse(GTDdata$age >45 & GTDdata$age <=65, "Age46-65",
+                                         ifelse(GTDdata$age >65 & GTDdata$age <=85, "Age66-85","AgeOver85"))))
 
 
 
@@ -176,7 +179,8 @@ TemporalOptions <- c("Proportion" = "Proportion",
 FilterOptions <- c("All" = "all",
                    "Gender" = "Gender",
                    "Country" = "Country",
-                   "Marriage" = "Marriage")
+                   "Marriage" = "Marriage",
+                   "Age"="AgeGroup")
 
 
 colorOptions <- c("None" = "none",
