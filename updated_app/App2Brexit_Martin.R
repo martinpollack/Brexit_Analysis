@@ -419,8 +419,8 @@ server <- function(input, output, clientData, session) {
       
       if(input$ScatterYaxis=="Proportion")
       {
-        y_min = 0.4
-        y_max = 0.6
+        y_min = 0.2
+        y_max = 0.8
       }
       else if(input$ScatterYaxis=="Count")
       {
