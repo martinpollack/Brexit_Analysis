@@ -7,8 +7,8 @@ library(scales)
 library(plotly)
 library(DataCombine)
 
-#setwd("~/Brexit_Analysis/Brexit Shiny")
-source('initialize_Brexit_Martin.R')
+setwd("~/Documents/Brexit_Analysis/")
+source('updated_app/initialize_Brexit_Martin.R')
 print("Finished initializing")
 
 #--------------------------------------------------------------------------------------------------------------------#
@@ -42,7 +42,7 @@ ui <- navbarPage("Brexit Data Visualization",
                          radioButtons("ScatterPlotType", label="Type of Plot", inline=TRUE,
                                       choices=c("plotly" = "plotly", "ggplot" = "ggplot"),
                                       selected="plotly"),
-
+                         
                          #Filter by variables
                          fluidRow(column(6, selectInput("ScatterFilterby", "Filter By", choices = FilterOptions))),
                          
@@ -85,7 +85,7 @@ ui <- navbarPage("Brexit Data Visualization",
                                                 plotlyOutput("graph1", height = "500px")),
                             conditionalPanel(condition="input.ScatterPlotType == 'ggplot'",
                                              plotOutput("ggplot1", height = "500px"))
-
+                            
                      )
                    ),
                    
@@ -95,7 +95,7 @@ ui <- navbarPage("Brexit Data Visualization",
                                                  min = 0, max = 10000, value=0)
                    )
                  ))
-                
+                 
 )
 #--------------------------------------------------------------------------------------------------------------------#
 #                                             DEFINE SERVER LOGIC                                                    #
@@ -258,11 +258,11 @@ server <- function(input, output, clientData, session) {
       } 
       
       
-      }
+    }
     else{
       
       filteredGTD <-compute_percentage(GTDdata)
-
+      
     }
     
     filteredGTD <- dplyr::arrange(filteredGTD,wave,NewVote)
@@ -295,7 +295,7 @@ server <- function(input, output, clientData, session) {
     #If there's no filter variable selected
     else{
       select(filteredGTD,c("date","NewVote","wave","Count","Proportion", "PercentChange", "ChangeInPercent", "TotalChange"))
-      }
+    }
     
   })
   
@@ -350,143 +350,143 @@ server <- function(input, output, clientData, session) {
   #############################################################################
   #Function for showing country-year, x, and y information when hovering over 
   #data points
-
-
+  
+  
   
   #A reactive expression with the plotly plot
   output$graph1 <- renderPlotly({
     
     currentData <- prepareCurrentData()
     
-    Visualization <- function(inputData) {
-    
-    #Preparing titles for axes
-    XaxisTitle = "Date"
-    YaxisTitle = input$ScatterYaxis
-    
-    
-    dat = inputData[, c("date", "NewVote", "display", "wave")] %>% pivot_wider(names_from=NewVote, values_from=display)
-    
-
-    if (input$ScatterXaxis != "all") {
-      voter_type = case_when(input$ScatterXaxis=="Stay" ~ "Stay",
-                             input$ScatterXaxis=="Leave" ~ "Leave")
+    Visualization <- function(inputData, legend) {
       
-      if (voter_type == "Stay"){
-        Add_color = "Orange"
+      #Preparing titles for axes
+      XaxisTitle = "Date"
+      YaxisTitle = input$ScatterYaxis
+      
+      
+      dat = inputData[, c("date", "NewVote", "display", "wave")] %>% pivot_wider(names_from=NewVote, values_from=display)
+      
+      
+      if (input$ScatterXaxis != "all") {
+        voter_type = case_when(input$ScatterXaxis=="Stay" ~ "Stay",
+                               input$ScatterXaxis=="Leave" ~ "Leave")
+        
+        if (voter_type == "Stay"){
+          Add_color = "Orange"
+        }
+        
+        else{
+          Add_color = "Blue"
+        }
+        
+        
+        currentVis <- plot_ly() %>% add_trace(data=dat, x=~date, y=~get(voter_type), text=~wave, name=voter_type,line=list(color=Add_color),
+                                              type = 'scatter', mode = 'lines+markers', marker=list(color=Add_color,size=10),
+                                              hovertemplate = ~paste("Wave",': %{text}<br>',
+                                                                     XaxisTitle,'<br>= %{x}<br>',
+                                                                     YaxisTitle,'<br>= %{y}<br>'),
+                                              showlegend = legend)
+        
+        
+        currentVis <- currentVis %>% layout(title=voter_type)
       }
       
-      else{
-        Add_color = "Blue"
+      else {
+        
+        currentVis <- plot_ly() %>% add_trace(data=inputData, x=~date, y=~display, color=~NewVote, colors=c("Blue", "Orange"), text=~wave, 
+                                              type = 'scatter', mode = 'lines+markers', marker=list(size=10),
+                                              hovertemplate = ~paste("Wave",': %{text}<br>',
+                                                                     XaxisTitle,'<br>= %{x}<br>',
+                                                                     YaxisTitle,'<br>= %{y}<br>'),
+                                              showlegend = legend)
+        
+        # currentVis <- currentVis %>% add_trace(data=dat, x=~date, y=~Stay, text=~wave, name="Stay",
+        #                                        type="scatter", mode="lines+markers", marker=list(size=10),
+        #                                        hovertemplate = ~paste("Wave",': %{text}<br>',
+        #                                                               XaxisTitle,'<br>= %{x}<br>',
+        #                                                               YaxisTitle,'<br>= %{y}<br>'),
+        #                                        showlegend = TRUE)
       }
       
-
-      currentVis <- plot_ly() %>% add_trace(data=dat, x=~date, y=~get(voter_type), text=~wave, name=voter_type,line=list(color=Add_color),
-                                            type = 'scatter', mode = 'lines+markers', marker=list(color=Add_color,size=10),
-                                            hovertemplate = ~paste("Wave",': %{text}<br>',
-                                                                   XaxisTitle,'<br>= %{x}<br>',
-                                                                   YaxisTitle,'<br>= %{y}<br>'),
-                                            showlegend = TRUE)
-
-
-      currentVis <- currentVis %>% layout(title=voter_type)
-    }
-    
-    else {
       
-      currentVis <- plot_ly() %>% add_trace(data=dat, x=~date, y=~Leave, text=~wave, name="Leave", 
-                                            type = 'scatter', mode = 'lines+markers', marker=list(size=10),
-                                            hovertemplate = ~paste("Wave",': %{text}<br>',
-                                                                   XaxisTitle,'<br>= %{x}<br>',
-                                                                   YaxisTitle,'<br>= %{y}<br>'),
-                                            showlegend = TRUE)
+      #add horizontal line
+      event1 <- "2016-06-23"
+      event2 <- "2017-03-29"
+      event3 <- "2020-02-01"
       
-      currentVis <- currentVis %>% add_trace(data=dat, x=~date, y=~Stay, text=~wave, name="Stay",
-                                             type="scatter", mode="lines+markers", marker=list(size=10),
-                                             hovertemplate = ~paste("Wave",': %{text}<br>',
-                                                                    XaxisTitle,'<br>= %{x}<br>',
-                                                                    YaxisTitle,'<br>= %{y}<br>'),
-                                             showlegend = TRUE)
-    }
-    
-    
-    #add horizontal line
-    event1 <- "2016-06-23"
-    event2 <- "2017-03-29"
-    event3 <- "2020-02-01"
-    
-    #Define the Y-axis range of event according to user selection of Count/Proportion
-    
-    if(input$ScatterYaxis=="Proportion")
+      #Define the Y-axis range of event according to user selection of Count/Proportion
+      
+      if(input$ScatterYaxis=="Proportion")
       {
-      y_min = 0.4
-      y_max = 0.6
-    }
-    else if(input$ScatterYaxis=="Count")
+        y_min = 0.4
+        y_max = 0.6
+      }
+      else if(input$ScatterYaxis=="Count")
       {
-      y_min = 0
-      y_max = 12000
-    }
-    else if(input$ScatterYaxis=="PercentChange")
-    {
-      y_min = -0.6
-      y_max = 0.6
-    }
-    else if(input$ScatterYaxis=="ChangeInPercent")
-    {
-      y_min = -0.1
-      y_max = 0.1
-    }
-    else if(input$ScatterYaxis=="TotalChange")
-    {
-      y_min = -6000
-      y_max = 6000
-    }
-    
-    
-    #If event1 is included in the user selection of dates
-    if(event1 >= input$ScatterYear[1] & event1 <= input$ScatterYear[2])
-    {    
+        y_min = 0
+        y_max = 12000
+      }
+      else if(input$ScatterYaxis=="PercentChange")
+      {
+        y_min = -0.6
+        y_max = 0.6
+      }
+      else if(input$ScatterYaxis=="ChangeInPercent")
+      {
+        y_min = -0.1
+        y_max = 0.1
+      }
+      else if(input$ScatterYaxis=="TotalChange")
+      {
+        y_min = -6000
+        y_max = 6000
+      }
       
-      lines <- data.frame(date=rep(event1, 100), y=seq(y_min,y_max,length.out=100))
-      currentVis <- currentVis %>% 
-        add_trace(data=lines, x=~date, y=~y, 
-                  hovertemplate= ~paste("Event1",': %{x}','<br>UK held a referendum<br>'),
-                  type="scatter", mode="lines", name="Event1", showlegend=FALSE)
-    }
-    
-    #If event2 is included in the user selection of dates
-    if(event2 >= input$ScatterYear[1] & event2 <= input$ScatterYear[2])
-    {    
       
-      lines <- data.frame(date=rep(event2, 100), y=seq(y_min,y_max,length.out=100))
-      currentVis <- currentVis %>% 
-        add_trace(data=lines, x=~date, y=~y, 
-                  hovertemplate= ~paste("Event2",': %{x}','<br>UK notified the EU of its decision to leave<br>'),
-                  type="scatter", mode="lines", name="Event2", showlegend=FALSE)
-    }
-    
-    #If event3 is included in the user selection of dates
-    if(event3 >= input$ScatterYear[1] & event3 <= input$ScatterYear[2])
-    {    
+      #If event1 is included in the user selection of dates
+      if(event1 >= input$ScatterYear[1] & event1 <= input$ScatterYear[2])
+      {    
+        
+        lines <- data.frame(date=rep(event1, 100), y=seq(y_min,y_max,length.out=100))
+        currentVis <- currentVis %>% 
+          add_trace(data=lines, x=~date, y=~y, 
+                    hovertemplate= ~paste("Event1",': %{x}','<br>UK held a referendum<br>'),
+                    type="scatter", mode="lines", name="Event1", showlegend=FALSE)
+      }
       
-      lines <- data.frame(date=rep(event3, 100), y=seq(y_min,y_max,length.out=100))
-      currentVis <- currentVis %>% 
-        add_trace(data=lines, x=~date, y=~y, 
-                  hovertemplate= ~paste("Event3",': %{x}','<br>UK withdrawals from the European Union<br>'),
-                  type="scatter", mode="lines", name="Event3", showlegend=FALSE)
-    }    
-
-    
-    #Sets titles for axes
-    a <- list(title = XaxisTitle)
-    b <- list(title = YaxisTitle)
-
-    currentVis <- currentVis %>% layout(xaxis = a, yaxis = b)
-    currentVis <- currentVis %>% layout(showlegend=TRUE)
-    
-    return(currentVis)
-
+      #If event2 is included in the user selection of dates
+      if(event2 >= input$ScatterYear[1] & event2 <= input$ScatterYear[2])
+      {    
+        
+        lines <- data.frame(date=rep(event2, 100), y=seq(y_min,y_max,length.out=100))
+        currentVis <- currentVis %>% 
+          add_trace(data=lines, x=~date, y=~y, 
+                    hovertemplate= ~paste("Event2",': %{x}','<br>UK notified the EU of its decision to leave<br>'),
+                    type="scatter", mode="lines", name="Event2", showlegend=FALSE)
+      }
+      
+      #If event3 is included in the user selection of dates
+      if(event3 >= input$ScatterYear[1] & event3 <= input$ScatterYear[2])
+      {    
+        
+        lines <- data.frame(date=rep(event3, 100), y=seq(y_min,y_max,length.out=100))
+        currentVis <- currentVis %>% 
+          add_trace(data=lines, x=~date, y=~y, 
+                    hovertemplate= ~paste("Event3",': %{x}','<br>UK withdrawals from the European Union<br>'),
+                    type="scatter", mode="lines", name="Event3", showlegend=FALSE)
+      }    
+      
+      
+      #Sets titles for axes
+      a <- list(title = XaxisTitle)
+      b <- list(title = YaxisTitle)
+      
+      currentVis <- currentVis %>% layout(xaxis = a, yaxis = b)
+      currentVis <- currentVis %>% layout(showlegend=TRUE)
+      
+      return(currentVis)
+      
     }
     
     #Configure the subgraphs based on 
@@ -494,22 +494,26 @@ server <- function(input, output, clientData, session) {
     if(input$ScatterFilterby == "Gender"){
       currentDataMale <- currentData[currentData$Gender=="Male",]
       currentDataFemale <- currentData[currentData$Gender=="Female",]
-      currentVisMale <-Visualization(currentDataMale)
-      currentVisFemale <-Visualization(currentDataFemale)
+      currentVisMale <-Visualization(currentDataMale, TRUE)
+      currentVisFemale <-Visualization(currentDataFemale, FALSE)
       
       #Configure the layout of subplots
       currentVis<-subplot(currentVisMale,currentVisFemale, nrows =2)
+      currentVis <- currentVis %>% layout(annotations=list(list(text="Male", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
+                                                           list(text="Female", showarrow=F, x=-0.07, y=0.47, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
       
     }
     
     else if(input$ScatterFilterby == "Marriage"){
       currentDataMarried <- currentData[currentData$Marriage=="Married",]
       currentDataSingle <- currentData[currentData$Marriage=="Single",]
-      currentVisMarried <-Visualization(currentDataMarried)
-      currentVisSingle <-Visualization(currentDataSingle)
+      currentVisMarried <-Visualization(currentDataMarried, TRUE)
+      currentVisSingle <-Visualization(currentDataSingle, FALSE)
       
       #Configure the layout of subplots
       currentVis<-subplot(currentVisMarried,currentVisSingle, nrows =2)
+      currentVis <- currentVis %>% layout(annotations=list(list(text="Married", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
+                                                           list(text="Single", showarrow=F, x=-0.05, y=0.5, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
       
     }
     
@@ -518,12 +522,15 @@ server <- function(input, output, clientData, session) {
       currentDataScotland <- currentData[currentData$Country=="Scotland",]
       currentDataWales <- currentData[currentData$Country=="Wales",]
       
-      currentVisEngland <-Visualization(currentDataEngland)
-      currentVisScotland <-Visualization(currentDataScotland)
-      currentVisWales <-Visualization(currentDataWales)
-
+      currentVisEngland <-Visualization(currentDataEngland, TRUE)
+      currentVisScotland <-Visualization(currentDataScotland, FALSE)
+      currentVisWales <-Visualization(currentDataWales, FALSE)
+      
       #Configure the layout of subplots
       currentVis<-subplot(currentVisEngland,currentVisScotland, currentVisWales, nrows =3)
+      currentVis <- currentVis %>% layout(annotations=list(list(text="England", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
+                                                           list(text="Scotland", showarrow=F, x=-0.05, y=0.6, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
+                                                           list(text="Wales", showarrow=F, x=-0.08, y=0.3, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
       
     }
     
@@ -534,22 +541,27 @@ server <- function(input, output, clientData, session) {
       currentDataAge4 <- currentData[currentData$AgeGroup=="Age66-85",]
       currentDataAge5 <- currentData[currentData$AgeGroup=="AgeOver85",]
       
-      currentVisAge1 <-Visualization(currentDataAge1)
-      currentVisAge2 <-Visualization(currentDataAge2)
-      currentVisAge3 <-Visualization(currentDataAge3)
-      currentVisAge4 <-Visualization(currentDataAge4)
-      currentVisAge5 <-Visualization(currentDataAge5)
+      currentVisAge1 <-Visualization(currentDataAge1, TRUE)
+      currentVisAge2 <-Visualization(currentDataAge2, FALSE)
+      currentVisAge3 <-Visualization(currentDataAge3, FALSE)
+      currentVisAge4 <-Visualization(currentDataAge4, FALSE)
+      currentVisAge5 <-Visualization(currentDataAge5, FALSE)
       
       #Configure the layout of subplots
       currentVis<-subplot(currentVisAge1,currentVisAge2, currentVisAge3,
                           currentVisAge4,currentVisAge5, nrows =5)
+      currentVis <- currentVis %>% layout(annotations=list(list(text="19-35", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
+                                                           list(text="36-45", showarrow=F, x=-0.05, y=0.75, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)),
+                                                           list(text="46-65", showarrow=F, x=-0.05, y=0.59, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)),
+                                                           list(text="66-85", showarrow=F, x=-0.06, y=0.37, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)),
+                                                           list(text="86+", showarrow=F, x=-0.05, y=0.17, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
       
     }
     
     else{
       
-    currentVis <-Visualization(currentData)
-    
+      currentVis <-Visualization(currentData, TRUE)
+      
     }
     #Option: color by
     #if(input$ScatterColorby != "none"){
@@ -560,16 +572,16 @@ server <- function(input, output, clientData, session) {
     currentVis
     
   })
-
   
-    #############################################################################  
+  
+  #############################################################################  
   #     GGPLOT CODE
   #############################################################################
   
   #ggplot scatterplot
   output$ggplot1 <- renderPlot({   
     currentData <- prepareCurrentData()  
-
+    
     #Preparing titles for axes
     XaxisTitle = "Date"
     YaxisTitle = input$ScatterYaxis
@@ -580,7 +592,7 @@ server <- function(input, output, clientData, session) {
     if (input$ScatterXaxis != "all") {
       currentVis <- ggplot(currentData, aes(x=date, y=display)) +
         geom_line(size=1) + geom_point(size=4)
-        theme_bw() + 
+      theme_bw() + 
         xlab(XaxisTitle) + ylab(YaxisTitle) + 
         theme(axis.title=element_text(size=18)) + 
         labs(title=voter_type)
@@ -612,9 +624,9 @@ server <- function(input, output, clientData, session) {
   })
   
   output$ScatterNotes <- renderText({
-
+    
     if(input$ScatterNumPoints == 0){
-
+      
     }
     
     Notes
@@ -622,11 +634,11 @@ server <- function(input, output, clientData, session) {
   
   output$ScatterNotes_left <- renderText({
     
-
+    
   })
   
   output$ScatterNotes_right <- renderText({
-
+    
   })
   
   #############################################################################  
@@ -769,12 +781,12 @@ server <- function(input, output, clientData, session) {
       
     } else {
       GTDbyCountryYear$Xvar <- GTDbyCountryYear[[BarYvar]]
-
+      
       #Option: Not Change Y-axis to percentage
       if(!input$BarCounts){
         currentBarPlot <- ggplot(GTDbyCountryYear[GTDbyCountryYear$Year == input$BarYears, ], aes(x=Xvar, fill="#a6cee3")) + 
-                  geom_histogram() + geom_rug() +
-        coord_cartesian(ylim=c(0, input$BarYlim))
+          geom_histogram() + geom_rug() +
+          coord_cartesian(ylim=c(0, input$BarYlim))
       }
       #Option: Change Y-axis to percentage
       else{
