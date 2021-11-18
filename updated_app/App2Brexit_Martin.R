@@ -7,8 +7,8 @@ library(scales)
 library(plotly)
 library(DataCombine)
 
-setwd("~/Documents/Brexit_Analysis/")
-source('updated_app/initialize_Brexit_Martin.R')
+#setwd("~/Brexit Analysis/Brexit Shiny")
+source('initialize_Brexit_Martin.R')
 print("Finished initializing")
 
 #--------------------------------------------------------------------------------------------------------------------#
@@ -499,8 +499,8 @@ server <- function(input, output, clientData, session) {
       
       #Configure the layout of subplots
       currentVis<-subplot(currentVisMale,currentVisFemale, nrows =2)
-      currentVis <- currentVis %>% layout(annotations=list(list(text="Male", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
-                                                           list(text="Female", showarrow=F, x=-0.07, y=0.47, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
+      currentVis <- currentVis %>% layout(annotations=list(list(text="M", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
+                                                           list(text="F", showarrow=F, x=-0.07, y=0.47, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
       
     }
     
@@ -512,8 +512,8 @@ server <- function(input, output, clientData, session) {
       
       #Configure the layout of subplots
       currentVis<-subplot(currentVisMarried,currentVisSingle, nrows =2)
-      currentVis <- currentVis %>% layout(annotations=list(list(text="Married", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
-                                                           list(text="Single", showarrow=F, x=-0.05, y=0.5, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
+      currentVis <- currentVis %>% layout(annotations=list(list(text="Mar", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
+                                                           list(text="Sin", showarrow=F, x=-0.05, y=0.5, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
       
     }
     
@@ -528,9 +528,9 @@ server <- function(input, output, clientData, session) {
       
       #Configure the layout of subplots
       currentVis<-subplot(currentVisEngland,currentVisScotland, currentVisWales, nrows =3)
-      currentVis <- currentVis %>% layout(annotations=list(list(text="England", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
-                                                           list(text="Scotland", showarrow=F, x=-0.05, y=0.6, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
-                                                           list(text="Wales", showarrow=F, x=-0.08, y=0.3, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
+      currentVis <- currentVis %>% layout(annotations=list(list(text="En", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
+                                                           list(text="Sc", showarrow=F, x=-0.05, y=0.6, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
+                                                           list(text="Wa", showarrow=F, x=-0.08, y=0.3, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
       
     }
     
