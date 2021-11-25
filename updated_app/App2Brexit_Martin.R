@@ -588,26 +588,110 @@ server <- function(input, output, clientData, session) {
     
     voter_type = case_when(input$ScatterXaxis=="Stay" ~ "Stay",
                            input$ScatterXaxis=="Leave" ~ "Leave")
+    # get rid of NA AgeGroup values
+    if (input$ScatterFilterby == "AgeGroup") {
+      currentData <- currentData[!is.na(currentData$AgeGroup),]
+    }
     
-    if (input$ScatterXaxis != "all") {
+    # make plots
+    if (input$ScatterXaxis == "Stay") {
       currentVis <- ggplot(currentData, aes(x=date, y=display)) +
-        geom_line(size=1) + geom_point(size=4)
-      theme_bw() + 
+        geom_line(size=1, color="orange") + geom_point(size=4, color="orange") +
+        theme_bw() + 
+        xlab(XaxisTitle) + ylab(YaxisTitle) + 
+        theme(axis.title=element_text(size=18)) + 
+        labs(title=voter_type)
+    }
+    else if (input$ScatterXaxis == "Leave") {
+      currentVis <- ggplot(currentData, aes(x=date, y=display)) +
+        geom_line(size=1, color="blue") + geom_point(size=4, color="blue")+
+        theme_bw() + 
         xlab(XaxisTitle) + ylab(YaxisTitle) + 
         theme(axis.title=element_text(size=18)) + 
         labs(title=voter_type)
     }
     else {
-      dat = currentData
-      levels(dat$NewVote) = c("Leave", "Stay")
+      currentData
+      levels(currentData$NewVote) = c("Leave", "Stay")
       
-      currentVis <- ggplot(dat, aes(x=date, y=display, color=NewVote)) +
+      currentVis <- ggplot(currentData, aes(x=date, y=display, color=NewVote)) +
         geom_line(size=1) + geom_point(size=4) + 
         theme_bw() + 
         xlab(XaxisTitle) + ylab(YaxisTitle) + 
         theme(axis.title=element_text(size=18)) + 
-        scale_colour_manual(values=c("blue", "orange", "green", "red"))
+        scale_colour_manual(values=c("blue", "orange"))
     }
+    
+    # add facet_grid if necessary
+    if (input$ScatterFilterby == "Gender") {
+      currentVis <- currentVis + facet_grid(Gender ~ .)
+    }
+    else if (input$ScatterFilterby == "Marriage") {
+      currentVis <- currentVis + facet_grid(Marriage ~ .)
+    }
+    else if (input$ScatterFilterby == "Country") {
+      currentVis <- currentVis + facet_grid(Country ~ .)
+    }
+    else if (input$ScatterFilterby == "AgeGroup") {
+      currentVis <- currentVis + facet_grid(AgeGroup ~ .)
+    }
+    
+    #add horizontal line
+    event1 <- as.Date("2016-06-23")
+    event2 <- as.Date("2017-03-29")
+    event3 <- as.Date("2020-02-01")
+    
+    #Define the Y-axis range of event according to user selection of Count/Proportion
+    
+    if(input$ScatterYaxis=="Proportion")
+    {
+      y_min = 0.2
+      y_max = 0.8
+    }
+    else if(input$ScatterYaxis=="Count")
+    {
+      y_min = 0
+      y_max = 12000
+    }
+    else if(input$ScatterYaxis=="PercentChange")
+    {
+      y_min = -0.6
+      y_max = 0.6
+    }
+    else if(input$ScatterYaxis=="ChangeInPercent")
+    {
+      y_min = -0.1
+      y_max = 0.1
+    }
+    else if(input$ScatterYaxis=="TotalChange")
+    {
+      y_min = -6000
+      y_max = 6000
+    }
+    
+    #If event1 is included in the user selection of dates
+    if(event1 >= input$ScatterYear[1] & event1 <= input$ScatterYear[2])
+    {    
+        currentVis <- currentVis + 
+          geom_vline(aes(xintercept = event1)) +
+          annotate("text", x=event1-35, y=y_min, label="UK holds referendum", color="black", angle=90, hjust=0)
+    }
+    
+    #If event2 is included in the user selection of dates
+    if(event2 >= input$ScatterYear[1] & event2 <= input$ScatterYear[2])
+    {    
+      currentVis <- currentVis + 
+        geom_vline(aes(xintercept = event2)) +
+        annotate("text", x=event2-35, y=y_min, label="UK notifies EU of decision to leave", color="black", angle=90, hjust=0)
+    }
+    
+    #If event3 is included in the user selection of dates
+    if(event3 >= input$ScatterYear[1] & event3 <= input$ScatterYear[2])
+    {    
+      currentVis <- currentVis + 
+        geom_vline(aes(xintercept = event3)) +
+        annotate("text", x=event3-35, y=y_min, label="UK withdraws from EU", color="black", angle=90, hjust=0)
+    }    
     
     #Option: Facets
     # if(input$ScatterFacetby != "none" && length(currentData$Year) != 0){
