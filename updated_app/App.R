@@ -5,10 +5,10 @@ library(tidyr)
 library(plyr)
 library(scales)
 library(plotly)
-library(DataCombine)
+#library(DataCombine)
 
 #setwd("~/Brexit Analysis/Brexit Shiny")
-source('initialize_Brexit_Martin.R')
+source('initialize.R')
 print("Finished initializing")
 
 #--------------------------------------------------------------------------------------------------------------------#
@@ -19,24 +19,22 @@ ui <- navbarPage("Brexit Data Visualization",
                  #==================
                  #Cross-Sectional Visualization
                  #==================
-                 tabPanel(span("Cross Sectional Analysis" , style = "color:#1369bf"), fluidPage(
+                 tabPanel(span("Brexit Visualization" , style = "color:#1369bf"), fluidPage(
                    titlePanel(htmlOutput("ScatterTitle")),
                    #div("Brexit Data Time-series - ", style = "color:#1369bf", align = "center")),    
                    fluidRow(
                      
                      # Sidebar tabs
                      column(4, tabsetPanel(
-                       tabPanel("Axes", wellPanel( #RENAME PANEL TAB
+                       tabPanel("Plots", wellPanel( #RENAME PANEL TAB
                          
                          #X-axis (Display variables, warnings, log option)
-                         fluidRow(column(9, selectInput("ScatterXaxis", "Participants Group", choices = XAxisOptions))),
-                         p(span(strong("note:"), style = "color:#1369bf"),
-                           "Select the variable to display"),
+                         fluidRow(column(9, selectInput("ScatterXaxis", "Participants", choices = XAxisOptions))),
+                         
                          
                          #Y-axis (GTD variables, warnings, log option)
                          fluidRow(column(9, selectInput("ScatterYaxis", "Display Option", choices = TemporalOptions))),
-                         p(span(strong("note:"), style = "color:#1369bf"),
-                           "Select the display by percentage or counts"),
+                         
                          
                          #Type of scatterplot and conditional faceting
                          radioButtons("ScatterPlotType", label="Type of Plot", inline=TRUE,
@@ -44,7 +42,7 @@ ui <- navbarPage("Brexit Data Visualization",
                                       selected="plotly"),
                          
                          #Filter by variables
-                         fluidRow(column(6, selectInput("ScatterFilterby", "Filter By", choices = FilterOptions))),
+                         fluidRow(column(6, selectInput("ScatterFilterby", "Facet By", choices = FilterOptions))),
                          
                          
                          #Color by and Success
@@ -61,22 +59,11 @@ ui <- navbarPage("Brexit Data Visualization",
                                      min = as.Date("2014-01-01","%Y-%m-%d"),
                                      max = as.Date("2020-12-31","%Y-%m-%d"),
                                      value=as.Date(c("2014-01-01","2020-12-31")),
-                                     timeFormat="%Y-%m-%d"),
+                                     timeFormat="%Y-%m-%d")
                          
-                         HTML("Variable Descriptions for the app: <a href='http://web.grinnell.edu/individuals/kuipers/stat2labs/Handouts/GlobalTerrorism/GTDVariableDescription.pdf'>Variable Descriptions</a>")
+                         #HTML("Variable Descriptions for the app: <a href='http://web.grinnell.edu/individuals/kuipers/stat2labs/Handouts/GlobalTerrorism/GTDVariableDescription.pdf'>Variable Descriptions</a>")
                          
                          # HTML("Additional resources for instructors: <a href='http://web.grinnell.edu/individuals/kuipers/stat2labs/'>Stats2Labs</a>")
-                       )),
-                       
-                       # Four Filters
-                       tabPanel("Filters", wellPanel(
-                         selectInput("ScatterRegion", "Filter by Region", choices = XAxisOptions),
-                         selectInput("ScatterAttack", "Filter by Attack Type", choices = XAxisOptions),
-                         selectInput("ScatterTarget", "Filter by Target Type", choices = XAxisOptions),
-                         selectInput("ScatterWeapon", "Filter by Weapon Type", choices = XAxisOptions),
-                         sliderInput("ScatterNincidents", "Restrict data to Country-Years that have at
-                                            least n incidents",
-                                     0, 200, 0, step = 5)
                        ))
                      )),
                      
@@ -672,9 +659,9 @@ server <- function(input, output, clientData, session) {
     #If event1 is included in the user selection of dates
     if(event1 >= input$ScatterYear[1] & event1 <= input$ScatterYear[2])
     {    
-        currentVis <- currentVis + 
-          geom_vline(aes(xintercept = event1)) +
-          annotate("text", x=event1-35, y=y_min, label="UK holds referendum", color="black", angle=90, hjust=0)
+      currentVis <- currentVis + 
+        geom_vline(aes(xintercept = event1)) +
+        annotate("text", x=event1-35, y=y_min, label="UK holds referendum", color="black", angle=90, hjust=0)
     }
     
     #If event2 is included in the user selection of dates
