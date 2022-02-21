@@ -5,6 +5,7 @@ library(tidyr)
 library(plyr)
 library(scales)
 library(plotly)
+library(ggnewscale)
 #library(DataCombine)
 
 #setwd("~/Brexit Analysis/Brexit Shiny")
@@ -462,6 +463,7 @@ server <- function(input, output, clientData, session) {
           add_trace(data=lines, x=~date, y=~y, 
                     hovertemplate= ~paste("Event3",': %{x}','<br>UK withdrawals from the European Union<br>'),
                     type="scatter", mode="lines", name="Event3", showlegend=FALSE)
+          
       }    
       
       
@@ -605,8 +607,8 @@ server <- function(input, output, clientData, session) {
         geom_line(size=1) + geom_point(size=4) + 
         theme_bw() + 
         xlab(XaxisTitle) + ylab(YaxisTitle) + 
-        theme(axis.title=element_text(size=18)) + 
-        scale_colour_manual(values=c("blue", "orange"))
+        theme(axis.title=element_text(size=18)) +
+        scale_color_manual("Vote", values=c("blue", "orange"))
     }
     
     # add facet_grid if necessary
@@ -628,58 +630,19 @@ server <- function(input, output, clientData, session) {
     event2 <- as.Date("2017-03-29")
     event3 <- as.Date("2020-02-01")
     
-    #Define the Y-axis range of event according to user selection of Count/Proportion
-    
-    if(input$ScatterYaxis=="Proportion")
-    {
-      y_min = 0.2
-      y_max = 0.8
-    }
-    else if(input$ScatterYaxis=="Count")
-    {
-      y_min = 0
-      y_max = 12000
-    }
-    else if(input$ScatterYaxis=="PercentChange")
-    {
-      y_min = -0.6
-      y_max = 0.6
-    }
-    else if(input$ScatterYaxis=="ChangeInPercent")
-    {
-      y_min = -0.1
-      y_max = 0.1
-    }
-    else if(input$ScatterYaxis=="TotalChange")
-    {
-      y_min = -6000
-      y_max = 6000
-    }
-    
-    #If event1 is included in the user selection of dates
-    if(event1 >= input$ScatterYear[1] & event1 <= input$ScatterYear[2])
-    {    
-      currentVis <- currentVis + 
-        geom_vline(aes(xintercept = event1)) +
-        annotate("text", x=event1-35, y=y_min, label="UK holds referendum", color="black", angle=90, hjust=0)
-    }
-    
-    #If event2 is included in the user selection of dates
-    if(event2 >= input$ScatterYear[1] & event2 <= input$ScatterYear[2])
-    {    
-      currentVis <- currentVis + 
-        geom_vline(aes(xintercept = event2)) +
-        annotate("text", x=event2-35, y=y_min, label="UK notifies EU of decision to leave", color="black", angle=90, hjust=0)
-    }
-    
-    #If event3 is included in the user selection of dates
-    if(event3 >= input$ScatterYear[1] & event3 <= input$ScatterYear[2])
-    {    
-      currentVis <- currentVis + 
-        geom_vline(aes(xintercept = event3)) +
-        annotate("text", x=event3-35, y=y_min, label="UK withdraws from EU", color="black", angle=90, hjust=0)
-    }    
-    
+    event_df <- data.frame(event_title=c("UK holds referendum", 
+                                         "UK notifies EU of decision to leave", 
+                                         "UK withdraws from EU"), 
+                           event_date=c(as.Date("2016-06-23"), 
+                                        as.Date("2017-03-29"), 
+                                        as.Date("2020-02-01")))
+    currentVis <- currentVis + 
+      geom_vline(aes(xintercept = event_date, linetype=event_title), data=event_df) +
+      scale_linetype_manual("Events", values = c("UK holds referendum"=1, 
+                                                 "UK notifies EU of decision to leave"=2, 
+                                                 "UK withdraws from EU"=3)) +
+      guides(linetype=guide_legend(keyheight=2))
+
     #Option: Facets
     # if(input$ScatterFacetby != "none" && length(currentData$Year) != 0){
     #   currentPlot <- currentPlot + facet_wrap(~currentFacet, ncol=4) +
