@@ -126,7 +126,7 @@ server <- function(input, output, clientData, session) {
   # A function to filter the data depending on user's input
   filterDataReactive <- reactive({
     
-#----------------------Construct Bar Chart Data Aquisiton Here-------------------#
+    #----------------------Construct Bar Chart Data Aquisiton Here-------------------#
     
     #Filtering the GTDdata
     BXTDates <- BXTDates
@@ -134,7 +134,7 @@ server <- function(input, output, clientData, session) {
     #Change the colnames in GTDdata
     colnames(GTDdata)[which(names(GTDdata) == "gender")] <- "Gender"
     colnames(GTDdata)[which(names(GTDdata) == "country")] <- "Country"
-      
+    
     #Contruct a function to compute percentages based on education
     compute_percentage_edu <- function(input) {
       
@@ -146,7 +146,7 @@ server <- function(input, output, clientData, session) {
                   AIS_sd=sd(AIS, na.rm=T)) %>%
         mutate(TotalPar = TotalLeave + TotalStay)%>%
         mutate(Percentage = prop.table(TotalPar/sum(TotalPar)))
-    
+      
       output <- filteredGTD 
       
       return(output)
@@ -210,7 +210,7 @@ server <- function(input, output, clientData, session) {
     
     
     #Option:Filter By
-    if(input$ScatterFilterby != "all"){
+    if(input$ScatterFilterby != "None"){
       
       #If Filter by gender
       if(input$ScatterFilterby=="Gender"){
@@ -301,7 +301,7 @@ server <- function(input, output, clientData, session) {
           
           filteredGTD<- rbind(filteredGTDWave2,filteredGTDWave3, filteredGTDWave4)
           
-
+          
         }
         
         #Scenario 3, three waves in total
@@ -310,25 +310,25 @@ server <- function(input, output, clientData, session) {
           filteredGTDWave1 <-compute_percentage_SES(Bardata[between(Bardata$wave,min(Bardata$wave),5),])
           filteredGTDWave2 <-compute_percentage_SES(Bardata[between(Bardata$wave,6,10),])
           filteredGTDWave3 <-compute_percentage_SES(Bardata[between(Bardata$wave,11,max(Bardata$wave)),])
-
+          
           filteredGTDWave1$WaveGroup = "Wave 1-5"
           filteredGTDWave2$WaveGroup = "Wave 6-10"
           filteredGTDWave3$WaveGroup = "Wave 11-15"
-
+          
           filteredGTD<- rbind(filteredGTDWave1, filteredGTDWave2,filteredGTDWave3)
           
         }
-
+        
         #Scenario 4, wave 1-2
         else if(between(min(Bardata$wave),1,5) && between(max(Bardata$wave),6,10))
-          {
+        {
           
           filteredGTDWave1 <-compute_percentage_SES(Bardata[between(Bardata$wave,min(Bardata$wave),5),])
           filteredGTDWave2 <-compute_percentage_SES(Bardata[between(Bardata$wave,6,max(Bardata$wave)),])
-
+          
           filteredGTDWave1$WaveGroup = "Wave 1-5"
           filteredGTDWave2$WaveGroup = "Wave 6-10"
-
+          
           filteredGTD<- rbind(filteredGTDWave1, filteredGTDWave2)
           
         }
@@ -364,9 +364,9 @@ server <- function(input, output, clientData, session) {
         else if(between(min(Bardata$wave),1,5) && between(max(Bardata$wave),1,5)){
           
           filteredGTDWave1 <-compute_percentage_SES(Bardata[between(Bardata$wave,min(Bardata$wave),max(Bardata$wave)),])
-
+          
           filteredGTDWave1$WaveGroup = "Wave 1-5"
-
+          
           filteredGTD<- filteredGTDWave1
           
         }
@@ -386,9 +386,9 @@ server <- function(input, output, clientData, session) {
         else if(between(min(Bardata$wave),11,15) && between(max(Bardata$wave),11,15)){
           
           filteredGTDWave3 <-compute_percentage_SES(Bardata[between(Bardata$wave,min(Bardata$wave),max(Bardata$wave)),])
-
+          
           filteredGTDWave3$WaveGroup = "Wave 11-15"
-
+          
           filteredGTD<- filteredGTDWave3
         }
         
@@ -409,20 +409,20 @@ server <- function(input, output, clientData, session) {
     else{
       
       filteredGTD <-compute_percentage_SES(Bardata)
-
+      
     }
     
-
+    
     ##Rename TotalPar as Count
     colnames(filteredGTD)[which(names(filteredGTD) == "TotalPar")] <- "Count"
     
     ##Rename percentage as proportion
     colnames(filteredGTD)[which(names(filteredGTD) == "Percentage")] <- "Proportion"
-
+    
     ##write.csv(filteredGTD,"GrossIncome data.csv",row.names = FALSE)
     
     #If there's a filter variable
-    if(input$ScatterFilterby != "all"){
+    if(input$ScatterFilterby != "None"){
       select(filteredGTD,c(input$ScatterXaxis,"NewVote","Count","Proportion",input$ScatterFilterby))
     }
     #If there's no filter variable selected
@@ -430,9 +430,9 @@ server <- function(input, output, clientData, session) {
       select(filteredGTD,c(input$ScatterXaxis,"NewVote","Count","Proportion"))
     }    
     
-#    aa <- select(filteredGTD,c("Education","NewVote","Count","Proportion"))
+    #    aa <- select(filteredGTD,c("Education","NewVote","Count","Proportion"))
     
-#--------------------------------------End------------------------------------#
+    #--------------------------------------End------------------------------------#
     
     
     
@@ -444,8 +444,8 @@ server <- function(input, output, clientData, session) {
     #Selects data relevant to user input and assigns uniform names to that
     # data, so the plotly functions can all use the same names
     currentData <- GTDandGM
-
-
+    
+    
     #if (input$ScatterXaxis != "Skill") {
     #  currentData <- currentData[currentData$NewVote==input$ScatterXaxis,]
     #}
@@ -524,21 +524,21 @@ server <- function(input, output, clientData, session) {
       
       
       if (input$ScatterXaxis == "Education") {
-        currentVis <- plot_ly(mergedata, x = ~Education, y = ~Leave, type = 'bar', name = "Leave", marker = list(color = "Blue"))
+        currentVis <- plot_ly(mergedata, x = ~Education, y = ~Leave, type = 'bar', name = "Leave", marker = list(color = "Blue"), showlegend = legend)
         
-        currentVis <- currentVis %>% add_trace(y = ~Stay, name = 'Stay', marker = list(color = "Orange"))
+        currentVis <- currentVis %>% add_trace(y = ~Stay, name = 'Stay', marker = list(color = "Orange"), showlegend = legend)
         
         currentVis <- currentVis %>% layout(yaxis = list(title = input$ScatterYaxis), barmode = 'group')
       }
       
       else if(input$ScatterXaxis == "GrossIncome")
-        {
-
+      {
+        
         ##----------------Process Information ----------------------------##
         
-        currentVis <- plot_ly(mergedata, x = ~GrossIncome, y = ~Leave, type = 'bar', name = "Leave", marker = list(color = "Blue"))
+        currentVis <- plot_ly(mergedata, x = ~GrossIncome, y = ~Leave, type = 'bar', name = "Leave", marker = list(color = "Blue"), showlegend = legend)
         
-        currentVis <- currentVis %>% add_trace(y = ~Stay, name = 'Stay', marker = list(color = "Orange"))
+        currentVis <- currentVis %>% add_trace(y = ~Stay, name = 'Stay', marker = list(color = "Orange"), showlegend = legend)
         
         currentVis <- currentVis %>% layout(yaxis = list(title = input$ScatterYaxis), barmode = 'group')
       }
@@ -548,9 +548,9 @@ server <- function(input, output, clientData, session) {
         
         ##----------------Process Information ----------------------------##
         
-        currentVis <- plot_ly(mergedata, x = ~Skill, y = ~Leave, type = 'bar', name = "Leave", marker = list(color = "Blue"))
+        currentVis <- plot_ly(mergedata, x = ~Skill, y = ~Leave, type = 'bar', name = "Leave", marker = list(color = "Blue"), showlegend = legend)
         
-        currentVis <- currentVis %>% add_trace(y = ~Stay, name = 'Stay', marker = list(color = "Orange"))
+        currentVis <- currentVis %>% add_trace(y = ~Stay, name = 'Stay', marker = list(color = "Orange"), showlegend = legend)
         
         currentVis <- currentVis %>% layout(yaxis = list(title = input$ScatterYaxis), barmode = 'group')
       }
@@ -569,7 +569,7 @@ server <- function(input, output, clientData, session) {
         y_min = 0
         y_max = 12000
       }
- 
+      
       
       
       
@@ -588,15 +588,15 @@ server <- function(input, output, clientData, session) {
     #Configure the subgraphs based on 
     
     if(input$ScatterFilterby == "Gender"){
-      currentDataMale <- currentData[currentData$Gender=="Male",]
       currentDataFemale <- currentData[currentData$Gender=="Female",]
-      currentVisMale <-Visualization(currentDataMale, TRUE)
-      currentVisFemale <-Visualization(currentDataFemale, FALSE)
+      currentDataMale <- currentData[currentData$Gender=="Male",]
+      currentVisFemale <-Visualization(currentDataFemale, TRUE)
+      currentVisMale <-Visualization(currentDataMale, FALSE)
       
       #Configure the layout of subplots
-      currentVis<-subplot(currentVisMale,currentVisFemale, nrows =2)
-      currentVis <- currentVis %>% layout(annotations=list(list(text="M", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
-                                                           list(text="F", showarrow=F, x=-0.07, y=0.47, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
+      currentVis<-subplot(currentVisFemale,currentVisMale, nrows =2)
+      currentVis <- currentVis %>% layout(annotations=list(list(text="F", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
+                                                           list(text="M", showarrow=F, x=-0.07, y=0.47, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
       
     }
     
@@ -626,7 +626,7 @@ server <- function(input, output, clientData, session) {
       currentVis<-subplot(currentVisEngland,currentVisScotland, currentVisWales, nrows =3)
       currentVis <- currentVis %>% layout(annotations=list(list(text="En", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
                                                            list(text="Sc", showarrow=F, x=-0.05, y=0.6, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
-                                                           list(text="Wa", showarrow=F, x=-0.08, y=0.3, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
+                                                           list(text="Wa", showarrow=F, x=-0.05, y=0.3, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
       
     }
     
@@ -647,8 +647,8 @@ server <- function(input, output, clientData, session) {
       currentVis<-subplot(currentVisAge1,currentVisAge2, currentVisAge3,
                           currentVisAge4,currentVisAge5, nrows =5)
       currentVis <- currentVis %>% layout(annotations=list(list(text="19-35", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
-                                                           list(text="36-45", showarrow=F, x=-0.05, y=0.75, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)),
-                                                           list(text="46-65", showarrow=F, x=-0.05, y=0.59, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)),
+                                                           list(text="36-45", showarrow=F, x=-0.05, y=0.78, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)),
+                                                           list(text="46-65", showarrow=F, x=-0.05, y=0.56, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)),
                                                            list(text="66-85", showarrow=F, x=-0.06, y=0.37, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)),
                                                            list(text="86+", showarrow=F, x=-0.05, y=0.17, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))))
       
@@ -660,20 +660,20 @@ server <- function(input, output, clientData, session) {
       currentDataWave2 <- currentData[currentData$WaveGroup=="Wave 6-10",]
       currentDataWave3 <- currentData[currentData$WaveGroup=="Wave 11-15",]
       currentDataWave4 <- currentData[currentData$WaveGroup=="Wave 16-20",]
-
+      
       currentVisWave1 <-Visualization(currentDataWave1, TRUE)
       currentVisWave2 <-Visualization(currentDataWave2, FALSE)
       currentVisWave3 <-Visualization(currentDataWave3, FALSE)
       currentVisWave4 <-Visualization(currentDataWave4, FALSE)
-
+      
       #Configure the layout of subplots
       currentVis<-subplot(currentVisWave1,currentVisWave2, currentVisWave3,
                           currentVisWave4, nrows =4)
-      currentVis <- currentVis %>% layout(annotations=list(list(text="Wave 1-5", showarrow=F, x=-0.05, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
-                                                           list(text="Wave 6-10", showarrow=F, x=-0.05, y=0.75, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)),
-                                                           list(text="Wave 11-15", showarrow=F, x=-0.05, y=0.59, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)),
-                                                           list(text="Wave 16-20", showarrow=F, x=-0.06, y=0.37, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))
-                                                           ))
+      currentVis <- currentVis %>% layout(annotations=list(list(text="Wave 1-5", showarrow=F, x=-0.03, y=1, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)), 
+                                                           list(text="Wave 6-10", showarrow=F, x=-0.02, y=0.71, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)),
+                                                           list(text="Wave 11-15", showarrow=F, x=-0.01, y=0.47, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18)),
+                                                           list(text="Wave 16-20", showarrow=F, x=-0.01, y=0.22, xanchor="center", yanchor="bottom", xref='paper', yref='paper', font=list(size=18))
+      ))
       
       
     }
@@ -710,44 +710,36 @@ server <- function(input, output, clientData, session) {
     currentData <- prepareCurrentData()  
     
     #Preparing titles for axes
-    XaxisTitle = "Date"
+    XaxisTitle = input$ScatterXaxis
     YaxisTitle = input$ScatterYaxis
     
     voter_type = case_when(input$ScatterXaxis=="Stay" ~ "Stay",
                            input$ScatterXaxis=="Leave" ~ "Leave")
+    
+    currentData <- currentData[!is.na(currentData$NewVote),]
+    
     # get rid of NA AgeGroup values
     if (input$ScatterFilterby == "AgeGroup") {
       currentData <- currentData[!is.na(currentData$AgeGroup),]
     }
     
-    # make plots
-    if (input$ScatterXaxis == "Stay") {
-      currentVis <- ggplot(currentData, aes(x=date, y=display)) +
-        geom_line(size=1, color="orange") + geom_point(size=4, color="orange") +
-        theme_bw() + 
-        xlab(XaxisTitle) + ylab(YaxisTitle) + 
-        theme(axis.title=element_text(size=18)) + 
-        labs(title=voter_type)
+    # unlist so ggplot works
+    currentData$display <- unlist(currentData$display)
+    currentData$NewVote <- unlist(currentData$NewVote)
+    currentData[,input$ScatterXaxis] <- unlist((currentData[,input$ScatterXaxis]))
+    
+    # reorder wave factor
+    if (input$ScatterFilterby == "WaveGroup") {
+      currentData$WaveGroup <- factor(currentData$WaveGroup, levels = c("Wave 1-5", "Wave 6-10", "Wave 11-15", "Wave 16-20"))
     }
-    else if (input$ScatterXaxis == "Leave") {
-      currentVis <- ggplot(currentData, aes(x=date, y=display)) +
-        geom_line(size=1, color="blue") + geom_point(size=4, color="blue")+
-        theme_bw() + 
-        xlab(XaxisTitle) + ylab(YaxisTitle) + 
-        theme(axis.title=element_text(size=18)) + 
-        labs(title=voter_type)
-    }
-    else {
-      currentData
-      levels(currentData$NewVote) = c("Leave", "Stay")
-      
-      currentVis <- ggplot(currentData, aes(x=date, y=display, color=NewVote)) +
-        geom_line(size=1) + geom_point(size=4) + 
-        theme_bw() + 
-        xlab(XaxisTitle) + ylab(YaxisTitle) + 
-        theme(axis.title=element_text(size=18)) +
-        scale_color_manual("Vote", values=c("blue", "orange"))
-    }
+    
+    currentVis <- ggplot(currentData, aes_string(x=input$ScatterXaxis, y="display", fill="NewVote")) +
+      geom_bar(stat="identity", position=position_dodge()) + 
+      theme_bw() + 
+      xlab(XaxisTitle) + ylab(YaxisTitle) + 
+      theme(axis.title=element_text(size=18)) +
+      scale_fill_manual("NewVote", values=c("blue", "orange"))
+
     
     # add facet_grid if necessary
     if (input$ScatterFilterby == "Gender") {
@@ -762,24 +754,10 @@ server <- function(input, output, clientData, session) {
     else if (input$ScatterFilterby == "AgeGroup") {
       currentVis <- currentVis + facet_grid(AgeGroup ~ .)
     }
+    else if (input$ScatterFilterby == "WaveGroup") {
+      currentVis <- currentVis + facet_grid(WaveGroup ~ .)
+    }
     
-    #add horizontal line
-    event1 <- as.Date("2016-06-23")
-    event2 <- as.Date("2017-03-29")
-    event3 <- as.Date("2020-02-01")
-    
-    event_df <- data.frame(event_title=c("UK holds referendum", 
-                                         "UK notifies EU of decision to leave", 
-                                         "UK withdraws from EU"), 
-                           event_date=c(as.Date("2016-06-23"), 
-                                        as.Date("2017-03-29"), 
-                                        as.Date("2020-02-01")))
-    currentVis <- currentVis + 
-      geom_vline(aes(xintercept = event_date, linetype=event_title), data=event_df) +
-      scale_linetype_manual("Events", values = c("UK holds referendum"=1, 
-                                                 "UK notifies EU of decision to leave"=2, 
-                                                 "UK withdraws from EU"=3)) +
-      guides(linetype=guide_legend(keyheight=2))
     
     #Option: Facets
     # if(input$ScatterFacetby != "none" && length(currentData$Year) != 0){
@@ -795,23 +773,23 @@ server <- function(input, output, clientData, session) {
     currentVis
   })
   
-  output$ScatterNotes <- renderText({
-    
-    if(input$ScatterNumPoints == 0){
-      
-    }
-    
-    Notes
-  })
-  
-  output$ScatterNotes_left <- renderText({
-    
-    
-  })
-  
-  output$ScatterNotes_right <- renderText({
-    
-  })
+  # output$ScatterNotes <- renderText({
+  #   
+  #   if(input$ScatterNumPoints == 0){
+  #     
+  #   }
+  #   
+  #   Notes
+  # })
+  # 
+  # output$ScatterNotes_left <- renderText({
+  #   
+  #   
+  # })
+  # 
+  # output$ScatterNotes_right <- renderText({
+  #   
+  # })
   
   #############################################################################  
   #     RIVERPLOT CODE
