@@ -61,28 +61,28 @@ BXTdata <- BXTdata[!is.na(BXTdata$country),]
 #BXTdata$p_gross_household <- as.character(BXTdata$p_gross_household)
 
 BXTdata$GrossIncome <- ifelse(grepl("under",BXTdata$p_gross_household, fixed=TRUE)
-                              | grepl("?5,000",BXTdata$p_gross_household, fixed=TRUE)
-                              | grepl("?10,000",BXTdata$p_gross_household, fixed=TRUE)
-                              | grepl("?15,000",BXTdata$p_gross_household, fixed=TRUE)
+                              | grepl("£5,000",BXTdata$p_gross_household, fixed=TRUE)
+                              | grepl("£10,000",BXTdata$p_gross_household, fixed=TRUE)
+                              | grepl("£15,000",BXTdata$p_gross_household, fixed=TRUE)
                               , "Level 1 0~19k",
                               ifelse(
-                                grepl("?20,000",BXTdata$p_gross_household, fixed=TRUE)
-                                | grepl("?25,000",BXTdata$p_gross_household, fixed=TRUE)
-                                | grepl("?30,000",BXTdata$p_gross_household, fixed=TRUE)
-                                | grepl("?35,000",BXTdata$p_gross_household, fixed=TRUE)
+                                grepl("£20,000",BXTdata$p_gross_household, fixed=TRUE)
+                                | grepl("£25,000",BXTdata$p_gross_household, fixed=TRUE)
+                                | grepl("£30,000",BXTdata$p_gross_household, fixed=TRUE)
+                                | grepl("£35,000",BXTdata$p_gross_household, fixed=TRUE)
                                 , "Level 2 20~39k",
                                 ifelse(
-                                  grepl("?40,000",BXTdata$p_gross_household, fixed=TRUE)
-                                  | grepl("?45,000",BXTdata$p_gross_household, fixed=TRUE)
-                                  | grepl("?50,000",BXTdata$p_gross_household, fixed=TRUE)
+                                  grepl("£40,000",BXTdata$p_gross_household, fixed=TRUE)
+                                  | grepl("£45,000",BXTdata$p_gross_household, fixed=TRUE)
+                                  | grepl("£50,000",BXTdata$p_gross_household, fixed=TRUE)
                                   , "Level 3 40~59k",
                                   ifelse(
-                                    grepl("?60,000",BXTdata$p_gross_household, fixed=TRUE)
-                                    | grepl("?70,000",BXTdata$p_gross_household, fixed=TRUE)
+                                    grepl("£60,000",BXTdata$p_gross_household, fixed=TRUE)
+                                    | grepl("£70,000",BXTdata$p_gross_household, fixed=TRUE)
                                     , "Level 4 60~70k",
                                     ifelse(
-                                      grepl("?100,000",BXTdata$p_gross_household, fixed=TRUE)
-                                      | grepl("?150,000",BXTdata$p_gross_household, fixed=TRUE)
+                                      grepl("£100,000",BXTdata$p_gross_household, fixed=TRUE)
+                                      | grepl("£150,000",BXTdata$p_gross_household, fixed=TRUE)
                                       , "Level 5 100k or above",NA
                                     )
                                   )
