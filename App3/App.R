@@ -82,13 +82,14 @@ ui <- navbarPage("Brexit Data Visualization",
                        tabPanel("Full Model", 
                                 column(4,
                                        wellPanel(
-                                         selectInput("Edu", "Education", choices = c("<17", "17-19", ">19")),
+                                         selectInput("Edu", "Education Years", choices = c("<17", "17-19", ">19")),
                                          selectInput("Gross", "Gross Income", choices = c("0-19k", "20-39k", "40-59k", "60-99k", "100k or above")),
                                          selectInput("Skill", "Skill Level", choices = c("Skill Level 1", "Skill Level 2", "Skill Level 3", "Skill Level 4", "Skill Level 5", "Skill Level 6", "Skill Level 7", "Skill Level 8")),
                                          selectInput("Age", "Age", choices = c("19-35", "36-45", "46-65", "66-85", "Over85")),
                                          selectInput("Marriage", "Marital Status", choices = c("Married", "Single")),
                                          selectInput("Country", "Country", choices = c("England", "Scottland", "Wales")),
                                          selectInput("Gender", "Gender", choices = c("Female", "Male")),
+                                         sliderInput("WeightedAIS", "AIS Score", min = -1, max = 1, value = 0, step = 0.02)
                                        )
                                 ),
                                 
@@ -96,12 +97,6 @@ ui <- navbarPage("Brexit Data Visualization",
                        )
                        
                      )
-                   ),
-                   
-                   #Stores information on how many data points are being displayed
-                   conditionalPanel(condition="1==0", 
-                                    numericInput("ScatterNumPoints", NULL,
-                                                 min = 0, max = 10000, value=0)
                    )
                  ))
                  
@@ -147,7 +142,7 @@ server <- function(input, output, clientData, session) {
   #############################################################################
   
   # A function to filter the data depending on user's input
-  filterDataReactive <- reactive({
+  prepareCurrentData <- reactive({
     
     #----------------------Construct Bar Chart Data Aquisiton Here-------------------#
     
@@ -183,36 +178,40 @@ server <- function(input, output, clientData, session) {
     DummyRegressData <- DummyRegressData[ -c(1:7)]
     
     ##Change the variable names for GLM
-    colnames(DummyRegressData)[3] <- "Edu1"
-    colnames(DummyRegressData)[4] <- "Edu2"
+    colnames(DummyRegressData)[3] <- "Edu2"
+    colnames(DummyRegressData)[4] <- "Edu3"
     
-    colnames(DummyRegressData)[5] <- "Gross1"
-    colnames(DummyRegressData)[6] <- "Gross2"
-    colnames(DummyRegressData)[7] <- "Gross3"
-    colnames(DummyRegressData)[8] <- "Gross4"
+    colnames(DummyRegressData)[5] <- "Gross2"
+    colnames(DummyRegressData)[6] <- "Gross3"
+    colnames(DummyRegressData)[7] <- "Gross4"
+    colnames(DummyRegressData)[8] <- "Gross5"
     
-    colnames(DummyRegressData)[9] <- "Skill1"
-    colnames(DummyRegressData)[10] <- "Skill2"
-    colnames(DummyRegressData)[11] <- "Skill3"
-    colnames(DummyRegressData)[12] <- "Skill4"
-    colnames(DummyRegressData)[13] <- "Skill5"
-    colnames(DummyRegressData)[14] <- "Skill6"
-    colnames(DummyRegressData)[15] <- "Skill7"
+    colnames(DummyRegressData)[9] <- "Skill2"
+    colnames(DummyRegressData)[10] <- "Skill3"
+    colnames(DummyRegressData)[11] <- "Skill4"
+    colnames(DummyRegressData)[12] <- "Skill5"
+    colnames(DummyRegressData)[13] <- "Skill6"
+    colnames(DummyRegressData)[14] <- "Skill7"
+    colnames(DummyRegressData)[15] <- "Skill8"
     
-    colnames(DummyRegressData)[16] <- "Age1"
-    colnames(DummyRegressData)[17] <- "Age2"
-    colnames(DummyRegressData)[18] <- "Age3"
-    colnames(DummyRegressData)[19] <- "Age4"
+    colnames(DummyRegressData)[16] <- "Age2"
+    colnames(DummyRegressData)[17] <- "Age3"
+    colnames(DummyRegressData)[18] <- "Age4"
+    colnames(DummyRegressData)[19] <- "Age5"
     
     colnames(DummyRegressData)[20] <- "MarriageSingle"
     
-    colnames(DummyRegressData)[21] <- "Country1"
-    colnames(DummyRegressData)[22] <- "Country2"
+    colnames(DummyRegressData)[21] <- "Country2"
+    colnames(DummyRegressData)[22] <- "Country3"
     
     colnames(DummyRegressData)[23] <- "GenderMale"
     
     
-    
+    DummyRegressData
+  })
+  
+  fitReducedModels <- reactive({
+    DummyRegressData <- prepareCurrentData()
     
     model0 <- glm(NewLeaveVote ~.,family=binomial(link='logit'),data=DummyRegressData)
     
@@ -232,9 +231,9 @@ server <- function(input, output, clientData, session) {
     #                                "Gross Household Income_Level 3 40~59k",
     #                                "Gross Household Income_Level 4 60~99k")
     
-    predictData <- do.call("rbind", replicate(100, predictData, simplify = FALSE))
+    predictData <- do.call("rbind", replicate(101, predictData, simplify = FALSE))
     
-    predictData$WeightedAIS <- seq(-1, 1, length.out = 100)
+    predictData$WeightedAIS <- seq(-1, 1, length.out = 101)
     
     PredictResults <- predict(model0, newdata = predictData, type = "response")
     
@@ -250,23 +249,23 @@ server <- function(input, output, clientData, session) {
     
     else if(input$ScatterXaxis == "Education") {
       
-      model <- glm(NewLeaveVote ~ WeightedAIS + Edu1 + Edu2,family=binomial(link='logit'),data=DummyRegressData)
+      model <- glm(NewLeaveVote ~ WeightedAIS + Edu2 + Edu3,family=binomial(link='logit'),data=DummyRegressData)
       
       predictData1 <- predictData
-      predictData1[,"Edu1"] <- 0
       predictData1[,"Edu2"] <- 0
+      predictData1[,"Edu3"] <- 0
       
       PredictResults11 <- predict(model, newdata = predictData1, type = "response")
       
       predictData2 <- predictData
-      predictData2[,"Edu1"] <- 1
-      predictData2[,"Edu2"] <- 0
+      predictData2[,"Edu2"] <- 1
+      predictData2[,"Edu3"] <- 0
       
       PredictResults12 <- predict(model, newdata = predictData2, type = "response")
       
       predictData3 <- predictData
-      predictData3[,"Edu1"] <- 0
-      predictData3[,"Edu2"] <- 1
+      predictData3[,"Edu2"] <- 0
+      predictData3[,"Edu3"] <- 1
       
       PredictResults13 <- predict(model, newdata = predictData3, type = "response")
       
@@ -278,45 +277,45 @@ server <- function(input, output, clientData, session) {
     
     else if(input$ScatterXaxis == "GrossIncome") {
       
-      model <- glm(NewLeaveVote ~ WeightedAIS + Gross1 + Gross2 + Gross3 + Gross4,family=binomial(link='logit'),data=DummyRegressData)
+      model <- glm(NewLeaveVote ~ WeightedAIS + Gross2 + Gross3 + Gross4 + Gross5,family=binomial(link='logit'),data=DummyRegressData)
       
       predictData1 <- predictData
-      predictData1[,"Gross1"] <- 0
       predictData1[,"Gross2"] <- 0
       predictData1[,"Gross3"] <- 0
       predictData1[,"Gross4"] <- 0
+      predictData1[,"Gross5"] <- 0
       
       PredictResults11 <- predict(model, newdata = predictData1, type = "response")
       
       predictData2 <- predictData
-      predictData2[,"Gross1"] <- 1
-      predictData2[,"Gross2"] <- 0
+      predictData2[,"Gross2"] <- 1
       predictData2[,"Gross3"] <- 0
       predictData2[,"Gross4"] <- 0
+      predictData2[,"Gross5"] <- 0
       
       PredictResults12 <- predict(model, newdata = predictData2, type = "response")
       
       predictData3 <- predictData
-      predictData3[,"Gross1"] <- 0
-      predictData3[,"Gross2"] <- 1
-      predictData3[,"Gross3"] <- 0
+      predictData3[,"Gross2"] <- 0
+      predictData3[,"Gross3"] <- 1
       predictData3[,"Gross4"] <- 0
+      predictData3[,"Gross5"] <- 0
       
       PredictResults13 <- predict(model, newdata = predictData3, type = "response")
       
       predictData4 <- predictData
-      predictData4[,"Gross1"] <- 0
       predictData4[,"Gross2"] <- 0
-      predictData4[,"Gross3"] <- 1
-      predictData4[,"Gross4"] <- 0
+      predictData4[,"Gross3"] <- 0
+      predictData4[,"Gross4"] <- 1
+      predictData4[,"Gross5"] <- 0
       
       PredictResults14 <- predict(model, newdata = predictData4, type = "response")
       
       predictData5 <- predictData
-      predictData5[,"Gross1"] <- 0
       predictData5[,"Gross2"] <- 0
       predictData5[,"Gross3"] <- 0
-      predictData5[,"Gross4"] <- 1
+      predictData5[,"Gross4"] <- 0
+      predictData5[,"Gross5"] <- 1
       
       PredictResults15 <- predict(model, newdata = predictData5, type = "response")      
       
@@ -330,93 +329,93 @@ server <- function(input, output, clientData, session) {
     
     else if(input$ScatterXaxis == "Skill") {
       
-      model <- glm(NewLeaveVote ~ WeightedAIS + Skill1 + Skill2 + Skill3 + Skill4 + Skill5 + Skill6 + Skill7,family=binomial(link='logit'),data=DummyRegressData)
+      model <- glm(NewLeaveVote ~ WeightedAIS + Skill2 + Skill3 + Skill4 + Skill5 + Skill6 + Skill7 + Skill8,family=binomial(link='logit'),data=DummyRegressData)
       
       predictData1 <- predictData
-      predictData1[,"Skill1"] <- 0
       predictData1[,"Skill2"] <- 0
       predictData1[,"Skill3"] <- 0
       predictData1[,"Skill4"] <- 0
       predictData1[,"Skill5"] <- 0
       predictData1[,"Skill6"] <- 0
       predictData1[,"Skill7"] <- 0
+      predictData1[,"Skill8"] <- 0
       
       PredictResults11 <- predict(model, newdata = predictData1, type = "response")
       
       predictData2 <- predictData
-      predictData2[,"Skill1"] <- 1
-      predictData2[,"Skill2"] <- 0
+      predictData2[,"Skill2"] <- 1
       predictData2[,"Skill3"] <- 0
       predictData2[,"Skill4"] <- 0
       predictData2[,"Skill5"] <- 0
       predictData2[,"Skill6"] <- 0
       predictData2[,"Skill7"] <- 0
+      predictData2[,"Skill8"] <- 0
       
       PredictResults12 <- predict(model, newdata = predictData2, type = "response")
       
       predictData3 <- predictData
-      predictData3[,"Skill1"] <- 0
-      predictData3[,"Skill2"] <- 1
-      predictData3[,"Skill3"] <- 0
+      predictData3[,"Skill2"] <- 0
+      predictData3[,"Skill3"] <- 1
       predictData3[,"Skill4"] <- 0
       predictData3[,"Skill5"] <- 0
       predictData3[,"Skill6"] <- 0
       predictData3[,"Skill7"] <- 0
+      predictData3[,"Skill8"] <- 0
       
       PredictResults13 <- predict(model, newdata = predictData3, type = "response")
       
       predictData4 <- predictData
-      predictData4[,"Skill1"] <- 0
       predictData4[,"Skill2"] <- 0
-      predictData4[,"Skill3"] <- 1
-      predictData4[,"Skill4"] <- 0
+      predictData4[,"Skill3"] <- 0
+      predictData4[,"Skill4"] <- 1
       predictData4[,"Skill5"] <- 0
       predictData4[,"Skill6"] <- 0
       predictData4[,"Skill7"] <- 0
+      predictData4[,"Skill8"] <- 0
       
       PredictResults14 <- predict(model, newdata = predictData4, type = "response")
       
       predictData5 <- predictData
-      predictData5[,"Skill1"] <- 0
       predictData5[,"Skill2"] <- 0
       predictData5[,"Skill3"] <- 0
-      predictData5[,"Skill4"] <- 1
-      predictData5[,"Skill5"] <- 0
+      predictData5[,"Skill4"] <- 0
+      predictData5[,"Skill5"] <- 1
       predictData5[,"Skill6"] <- 0
       predictData5[,"Skill7"] <- 0
+      predictData5[,"Skill8"] <- 0
       
       PredictResults15 <- predict(model, newdata = predictData5, type = "response")
       
       predictData6 <- predictData
-      predictData6[,"Skill1"] <- 0
       predictData6[,"Skill2"] <- 0
       predictData6[,"Skill3"] <- 0
       predictData6[,"Skill4"] <- 0
-      predictData6[,"Skill5"] <- 1
-      predictData6[,"Skill6"] <- 0
+      predictData6[,"Skill5"] <- 0
+      predictData6[,"Skill6"] <- 1
       predictData6[,"Skill7"] <- 0
+      predictData6[,"Skill8"] <- 0
       
       PredictResults16 <- predict(model, newdata = predictData6, type = "response")
       
       predictData7 <- predictData
-      predictData7[,"Skill1"] <- 0
       predictData7[,"Skill2"] <- 0
       predictData7[,"Skill3"] <- 0
       predictData7[,"Skill4"] <- 0
       predictData7[,"Skill5"] <- 0
-      predictData7[,"Skill6"] <- 1
-      predictData7[,"Skill7"] <- 0
+      predictData7[,"Skill6"] <- 0
+      predictData7[,"Skill7"] <- 1
+      predictData7[,"Skill8"] <- 0
       
       PredictResults17 <- predict(model, newdata = predictData7, type = "response")
       
       predictData8 <- predictData
-      predictData8[,"Skill1"] <- 0
       predictData8[,"Skill2"] <- 0
       predictData8[,"Skill3"] <- 0
       predictData8[,"Skill4"] <- 0
       predictData8[,"Skill5"] <- 0
       predictData8[,"Skill6"] <- 0
-      predictData8[,"Skill7"] <- 1
+      predictData8[,"Skill7"] <- 0
+      predictData8[,"Skill8"] <- 1
       
       PredictResults18 <- predict(model, newdata = predictData8, type = "response")
       
@@ -433,45 +432,45 @@ server <- function(input, output, clientData, session) {
     
     else if(input$ScatterXaxis == "AgeGroup") {
       
-      model <- glm(NewLeaveVote ~ WeightedAIS + Age1 + Age2 + Age3 + Age4,family=binomial(link='logit'),data=DummyRegressData)
+      model <- glm(NewLeaveVote ~ WeightedAIS + Age2 + Age3 + Age4 + Age5,family=binomial(link='logit'),data=DummyRegressData)
       
       predictData1 <- predictData
-      predictData1[,"Age1"] <- 0
       predictData1[,"Age2"] <- 0
       predictData1[,"Age3"] <- 0
       predictData1[,"Age4"] <- 0
+      predictData1[,"Age5"] <- 0
       
       PredictResults11 <- predict(model, newdata = predictData1, type = "response")
       
       predictData2 <- predictData
-      predictData2[,"Age1"] <- 1
-      predictData2[,"Age2"] <- 0
+      predictData2[,"Age2"] <- 1
       predictData2[,"Age3"] <- 0
       predictData2[,"Age4"] <- 0
+      predictData2[,"Age5"] <- 0
       
       PredictResults12 <- predict(model, newdata = predictData2, type = "response")
       
       predictData3 <- predictData
-      predictData3[,"Age1"] <- 0
-      predictData3[,"Age2"] <- 1
-      predictData3[,"Age3"] <- 0
+      predictData3[,"Age2"] <- 0
+      predictData3[,"Age3"] <- 1
       predictData3[,"Age4"] <- 0
+      predictData3[,"Age5"] <- 0
       
       PredictResults13 <- predict(model, newdata = predictData3, type = "response")
       
       predictData4 <- predictData
-      predictData4[,"Age1"] <- 0
       predictData4[,"Age2"] <- 0
-      predictData4[,"Age3"] <- 1
-      predictData4[,"Age4"] <- 0
+      predictData4[,"Age3"] <- 0
+      predictData4[,"Age4"] <- 1
+      predictData4[,"Age5"] <- 0
       
       PredictResults14 <- predict(model, newdata = predictData4, type = "response")
       
       predictData5 <- predictData
-      predictData5[,"Age1"] <- 0
       predictData5[,"Age2"] <- 0
       predictData5[,"Age3"] <- 0
-      predictData5[,"Age4"] <- 1
+      predictData5[,"Age4"] <- 0
+      predictData5[,"Age5"] <- 1
       
       PredictResults15 <- predict(model, newdata = predictData5, type = "response")      
       
@@ -505,23 +504,23 @@ server <- function(input, output, clientData, session) {
     
     else if(input$ScatterXaxis == "Country") {
       
-      model <- glm(NewLeaveVote ~ WeightedAIS + Country1 + Country2,family=binomial(link='logit'),data=DummyRegressData)
+      model <- glm(NewLeaveVote ~ WeightedAIS + Country2 + Country3,family=binomial(link='logit'),data=DummyRegressData)
       
       predictData1 <- predictData
-      predictData1[,"Country1"] <- 0
       predictData1[,"Country2"] <- 0
+      predictData1[,"Country3"] <- 0
       
       PredictResults11 <- predict(model, newdata = predictData1, type = "response")
       
       predictData2 <- predictData
-      predictData2[,"Country1"] <- 1
-      predictData2[,"Country2"] <- 0
+      predictData2[,"Country2"] <- 1
+      predictData2[,"Country3"] <- 0
       
       PredictResults12 <- predict(model, newdata = predictData2, type = "response")
       
       predictData3 <- predictData
-      predictData3[,"Country1"] <- 0
-      predictData3[,"Country2"] <- 1
+      predictData3[,"Country2"] <- 0
+      predictData3[,"Country3"] <- 1
       
       PredictResults13 <- predict(model, newdata = predictData3, type = "response")
       
@@ -555,7 +554,7 @@ server <- function(input, output, clientData, session) {
     
     #PredictResults <- as.data.frame(PredictResults)
     
-    PredictResults$WeightedAIS <- seq(-1, 1, length.out = 100)
+    PredictResults$WeightedAIS <- seq(-1, 1, length.out = 101)
     
     PredictResults$Coeff <- sprintf("%.4f",model$coefficients["WeightedAIS"])
     
@@ -566,38 +565,72 @@ server <- function(input, output, clientData, session) {
     #    aa <- select(filteredGTD,c("Education","NewVote","Count","Proportion"))
     
     #--------------------------------------End------------------------------------#
-    
-    
-    
   })
   
-  prepareCurrentData <- reactive({
-    GTDandGM <- filterDataReactive()
+  fitFullModel <- reactive({
+    DummyRegressData <- prepareCurrentData()
     
-    #Selects data relevant to user input and assigns uniform names to that
-    # data, so the plotly functions can all use the same names
-    currentData <- GTDandGM
+    model <- glm(NewLeaveVote ~ ., data=DummyRegressData, family=binomial(link="logit"))
     
+    PredictData <- expand.grid("Education"=c("Edu1", "Edu2", "Edu3"), 
+                               "Gross"=c("Gross1", "Gross2", "Gross3", "Gross4", "Gross5"),
+                               "Skill"=c("Skill1", "Skill2", "Skill3", "Skill4", "Skill5", "Skill6", "Skill7", "Skill8"),
+                               "Age"=c("Age1", "Age2", "Age3", "Age4", "Age5"),
+                               "MarriageStatus"=c("MarriageSingle", "MarriageMarried"),
+                               "Country"=c("Country1", "Country2", "Country3"),
+                               "Gender"=c("GenderMale", "GenderFemale")
+    )
     
-    #if (input$ScatterXaxis != "Skill") {
-    #  currentData <- currentData[currentData$NewVote==input$ScatterXaxis,]
-    #}
+    PredictData <- dummy_cols(PredictData, remove_first_dummy=TRUE)
     
-    #Option: Colors
-    #if(input$ScatterColorby != "none"){
-    #  currentData$Color <- GTDandGM[[input$ScatterColorby]]
-    #}
-    #Option: Facets
-    #if(input$ScatterFacetby != "none"){
-    #  currentData$currentFacet <- GTDandGM[[input$ScatterFacetby]]
-    #}
+    PredictData <- PredictData[ -c(1:7)]
     
+    ##Change the variable names for GLM
+    colnames(PredictData)[1] <- "Edu2"
+    colnames(PredictData)[2] <- "Edu3"
     
-    #Ensures that there is a Y-variable if there is no data, so that plotly
-    # doesn't throw an error
-    #if(length(currentData$Wave) == 0) currentData$Yvar <- currentData$Yvar + 0
+    colnames(PredictData)[3] <- "Gross2"
+    colnames(PredictData)[4] <- "Gross3"
+    colnames(PredictData)[5] <- "Gross4"
+    colnames(PredictData)[6] <- "Gross5"
     
-    currentData
+    colnames(PredictData)[7] <- "Skill2"
+    colnames(PredictData)[8] <- "Skill3"
+    colnames(PredictData)[9] <- "Skill4"
+    colnames(PredictData)[10] <- "Skill5"
+    colnames(PredictData)[11] <- "Skill6"
+    colnames(PredictData)[12] <- "Skill7"
+    colnames(PredictData)[13] <- "Skill8"
+    
+    colnames(PredictData)[14] <- "Age2"
+    colnames(PredictData)[15] <- "Age3"
+    colnames(PredictData)[16] <- "Age4"
+    colnames(PredictData)[17] <- "Age5"
+    
+    colnames(PredictData)[18] <- "MarriageSingle"
+    
+    colnames(PredictData)[19] <- "Country2"
+    colnames(PredictData)[20] <- "Country3"
+    
+    colnames(PredictData)[21] <- "GenderMale"
+    
+    PredictData <- PredictData[rep(seq_len(nrow(PredictData)), each=101), ]
+    
+    PredictData <- cbind("WeightedAIS"=rep(seq(-1, 1, length.out=101), nrow(PredictData)/101), PredictData)
+    
+    fitted <- predict(model, newdata=PredictData, type="response")
+    
+    # PredictData <- expand.grid("Education"=c("Edu1", "Edu2", "Edu3"), 
+    #                            "Gross"=c("Gross1", "Gross2", "Gross3", "Gross4", "Gross5"),
+    #                            "Skill"=c("Skill1", "Skill2", "Skill3", "Skill4", "Skill5", "Skill6", "Skill7", "Skill8"),
+    #                            "Age"=c("Age1", "Age2", "Age3", "Age4", "Age5"),
+    #                            "MarriageStatus"=c("MarriageSingle", "MarriageMarried"),
+    #                            "Country"=c("Country1", "Country2", "Country3"),
+    #                            "Gender"=c("GenderMale", "GenderFemale")
+    # )
+    PredictData$fitted <- fitted
+    
+    PredictData
   })
   
   output$ScatterTitle <- renderText({
@@ -620,12 +653,12 @@ server <- function(input, output, clientData, session) {
   #Create formula
   
   b <- reactive({
-    currentData <- prepareCurrentData()
+    currentData <- fitReducedModels()
     currentData$Coeff[1]
   })
   
   a <- reactive({
-    currentData <- prepareCurrentData()
+    currentData <- fitReducedModels()
     currentData$Intercept[1]
   })
   
@@ -644,7 +677,7 @@ server <- function(input, output, clientData, session) {
   #A reactive expression with the plotly plot
   output$graph1 <- renderPlotly({
     
-    currentData <- prepareCurrentData()
+    currentData <- fitReducedModels()
     
     if (input$ScatterXaxis == "None") {
       
@@ -734,7 +767,7 @@ server <- function(input, output, clientData, session) {
   
   #ggplot scatterplot
   output$ggplot1 <- renderPlot({   
-    currentData <- prepareCurrentData()  
+    currentData <- fitReducedModels()  
     
     #Preparing titles for axes
     XaxisTitle = input$ScatterXaxis
@@ -866,219 +899,92 @@ server <- function(input, output, clientData, session) {
   # })
   
   #############################################################################  
-  #     RIVERPLOT CODE
+  #     Full model code
   #############################################################################
-  
-  output$RiverPlot <- renderPlot({
+  output$full.graph <- renderPlotly({
+    currentData <- fitFullModel()
     
-    # Variable to join GTDOverTime and VariablesByYear (3 dataframes with
-    # total number of incidents/fatalities/wounded by year and facet, 
-    # if applicable)
-    if(input$RiverFacets != "none"){
-      joinTotalBy <- c("Year", input$RiverFacets)
+    if (input$Edu == "<17") {
+      currentData <- currentData[currentData$Edu2 == 0 & currentData$Edu3 == 0,]
+    } else if (input$Edu == "17-19") {
+      currentData <- currentData[currentData$Edu2 == 1,]
     } else {
-      joinTotalBy <- "Year"   
+      currentData <- currentData[currentData$Edu3 == 1,]
     }
     
-    #Variables is used in ddply to extract absolute number of incidents, etc.
-    Variables = c(joinTotalBy, input$RiverColors)
-    
-    # GTDOverTime is a dataframe with rows as each possible combination of year, 
-    # color variable, facet variable (if applicable), and the corresponding 
-    # count of the appropriate variable (incidents, fatalities, wounded) 
-    # "absolute" references the column which has the absolute counts of 
-    # incidents, fatalities, or wounded
-    GTDOverTime <- switch(input$RiverYaxis,
-                          "Incidents" = ddply(GTDdata, Variables, 
-                                              summarise, absolute=length(Success)),
-                          "Fatalities" = ddply(GTDdata, Variables, 
-                                               summarise, absolute=sum(Fatalities, na.rm = TRUE)),
-                          "Wounded" = ddply(GTDdata, Variables, 
-                                            summarise, absolute=sum(Wounded, na.rm = TRUE)))
-    
-    #Adding the total number of incidents by year (and facet, if applicable)
-    # and calculating the relative values from the total and absolute
-    VariablesByYear <- CalcTotalByFacet(input$RiverFacets)
-    GTDOverTime <- left_join(GTDOverTime, VariablesByYear[[input$RiverYaxis]], 
-                             by=joinTotalBy) 
-    GTDOverTime$relative <- GTDOverTime$absolute / GTDOverTime$total
-    
-    #Renaming columns 
-    names(GTDOverTime)[names(GTDOverTime) == input$RiverColors] <- "Color"  
-    
-    if(input$RiverFacets != "none" &&
-       input$RiverColors != input$RiverFacets){
-      names(GTDOverTime)[names(GTDOverTime)==input$RiverFacets]<-"currentFacet"
-    }
-    
-    #Filters by years
-    GTDOverTime <- GTDOverTime[GTDOverTime$Year >= input$RiverYears[1] &
-                                 GTDOverTime$Year <= input$RiverYears[2],  ]
-    
-    #Option: Color By
-    if(input$RiverCounts == "P"){
-      RiverPlot <- ggplot(data=GTDOverTime, aes(x=Year, y=relative, fill=Color)) +
-        geom_area(position = "stack") +
-        scale_y_continuous(labels=percent)
-      
-      # fix the huge number of y-axis for log
-    } else if (input$RiverCounts == "C"){
-      #       if(input$Riverlogy){
-      #         GTDOverTime$logabsolute <- log10(GTDOverTime$absolute + 1)
-      #         GTDOverTime$logcumabsolute <- cumsum()
-      #         RiverPlot <- ggplot(data=GTDOverTime, aes(x=Year, y=absolute, fill=Color)) +
-      #           geom_area(position = "dodge") 
-      #         
-      # #         RiverPlot <- qplot(Year, absolute, data=GTDOverTime, 
-      # #                            fill = Color, geom="area")
-      #       } else {
-      RiverPlot <- ggplot(data=GTDOverTime, aes(x=Year, y=absolute, fill=Color)) +
-        geom_area(position = "stack") 
-      #       }
-    }
-    
-    
-    #Option: Facet By
-    if(input$RiverFacets != "none"){
-      if(input$RiverFacets != input$RiverColors){
-        RiverPlot <- RiverPlot + facet_wrap(~currentFacet, ncol=4) 
-      } else {
-        RiverPlot <- RiverPlot + facet_wrap(~Color, ncol=4)    
-      }
-    }
-    
-    RiverPlot <- RiverPlot + 
-      theme(legend.position="right", strip.text=element_text(size=18),
-            axis.title=element_text(size=18)) + 
-      ylab(input$RiverYaxis)
-    
-    #   print(sum(is.na(GTDOverTime)))
-    
-    #    A problem: why there is some grey area? Color by Target Type, Facet by
-    #         Weapon Type
-    #    GTDOverTime <- arrange(GTDOverTime, currentFacet)
-    #    GTDOverTime <- arrange(GTDOverTime, Year)
-    #    
-    #    View(GTDOverTime)
-    
-    RiverPlot
-    
-  })
-  
-  #############################################################################  
-  #     BARPLOT CODE
-  #############################################################################
-  
-  output$BarPlot <- renderPlot({ 
-    
-    #Removing year 1993 as an option
-    validate(
-      if(input$BarYears == 1993){
-        "Year 1993 doesn't have data. Please choose another year."
-      }
-    )
-    
-    #Making title for X-axis based on user input
-    if(input$BarRangeType == "Below/Above"){
-      XaxisTitle <- "Below/Above n"
+    if (input$Gross == "0-19k") {
+      currentData <- currentData[currentData$Gross2 == 0 & currentData$Gross3 == 0 & currentData$Gross4 == 0 & currentData$Gross5 == 0,]
+    } else if (input$Gross == "20-39k") {
+      currentData <- currentData[currentData$Gross2 == 1,]
+    } else if (input$Gross == "40-59k") {
+      currentData <- currentData[currentData$Gross3 == 1,]
+    } else if (input$Gross == "60-99k") {
+      currentData <- currentData[currentData$Gross4 == 1,]
     } else {
-      XaxisTitle <- "Number of"
-    }
-    XaxisTitle <- paste(XaxisTitle, input$BarYaxis)
-    
-    #Option: Color by
-    if(input$BarColor != "none"){
-      GTDbyCountryYear$Color <- GTDbyCountryYear[[input$BarColor]]
+      currentData <- currentData[currentData$Gross5 == 1,]
     }
     
-    #Setting X variable
-    BarYvar <- paste("Num", input$BarYaxis, sep="")
-    
-    if(input$BarRangeType == "Below/Above"){      
-      GTDbyCountryYear$Xvar <- paste(input$BarNValue, "or Fewer", input$BarYaxis)
-      AboveX <- GTDbyCountryYear[[BarYvar]] > input$BarNValue
-      GTDbyCountryYear$Xvar[AboveX] <- paste(input$BarNValue + 1, "or More", input$BarYaxis)
-      
-      currentBarPlot <- ggplot(GTDbyCountryYear[GTDbyCountryYear$Year == input$BarYears, ], 
-                               aes(as.numeric(factor(Xvar)), y = ..count.., fill="#a6cee3")) + 
-        geom_bar()
-      
+    if (input$Skill == "Skill Level 1") {
+      currentData <- currentData[currentData$Skill2 == 0 & currentData$Skill3 == 0 & currentData$Skill4 == 0 & currentData$Skill5 == 0 & currentData$Skill6 == 0 & currentData$Skill7 == 0 & currentData$Skill8 == 0,]
+    } else if (input$Skill == "Skill Level 2") {
+      currentData <- currentData[currentData$Skill2 == 1,]
+    } else if (input$Skill == "Skill Level 3") {
+      currentData <- currentData[currentData$Skill3 == 1,]
+    } else if (input$Skill == "Skill Level 4") {
+      currentData <- currentData[currentData$Skill4 == 1,]
+    } else if (input$Skill == "Skill Level 5") {
+      currentData <- currentData[currentData$Skill5 == 1,]
+    } else if (input$Skill == "Skill Level 6") {
+      currentData <- currentData[currentData$Skill6 == 1,]
+    } else if (input$Skill == "Skill Level 7") {
+      currentData <- currentData[currentData$Skill7 == 1,]
     } else {
-      GTDbyCountryYear$Xvar <- GTDbyCountryYear[[BarYvar]]
-      
-      #Option: Not Change Y-axis to percentage
-      if(!input$BarCounts){
-        currentBarPlot <- ggplot(GTDbyCountryYear[GTDbyCountryYear$Year == input$BarYears, ], aes(x=Xvar, fill="#a6cee3")) + 
-          geom_histogram() + geom_rug() +
-          coord_cartesian(ylim=c(0, input$BarYlim))
-      }
-      #Option: Change Y-axis to percentage
-      else{
-        currentBarPlot <- ggplot(GTDbyCountryYear[GTDbyCountryYear$Year == input$BarYears, ], aes(x=Xvar, fill="#a6cee3")) + 
-          geom_histogram(aes(y = (..count..)/sum(..count..))) + geom_rug() +
-          scale_y_continuous(labels=scales::percent)
-      }
+      currentData <- currentData[currentData$Skill8 == 1,]
     }
     
-    currentBarPlot <- currentBarPlot + xlab(input$BarRangeType) + ylab("Number of Countries") +
-      scale_fill_manual(values=customColors) +
-      theme(legend.position="none", axis.title=element_text(size=18)) + 
-      xlab(XaxisTitle)
-    
-    #Option: Color by
-    if(input$BarColor != "none"){
-      currentBarPlot <- currentBarPlot + aes(fill=Color) +
-        theme(legend.position="right")
+    if (input$Age == "19-35") {
+      currentData <- currentData[currentData$Age2 == 0 & currentData$Age3 == 0 & currentData$Age4 == 0 & currentData$Age5 == 0,]
+    } else if (input$Age == "36-45") {
+      currentData <- currentData[currentData$Age2 == 1,]
+    } else if (input$Age == "46-65") {
+      currentData <- currentData[currentData$Age3 == 1,]
+    } else if (input$Age == "66-85") {
+      currentData <- currentData[currentData$Age4 == 1,]
+    } else {
+      currentData <- currentData[currentData$Age5 == 1,]
     }
     
-    #Option: Puts count and percentage at the top of bars for Below/Above
-    # n incidents without color
-    if(input$BarColor == "none" & input$BarRangeType == "Below/Above"){
-      currentBarPlot <- currentBarPlot + 
-        geom_text(aes(y=(..count..), 
-                      label = ifelse((..count..)==0,
-                                     "", 
-                                     paste(..count.., " (",
-                                           scales::percent((..count..)/sum(..count..)),
-                                           ")", sep = ""))),
-                  stat="bin",colour="#1f78b4")
+    if (input$Marriage == "Married") {
+      currentData <- currentData[currentData$MarriageSingle == 0,]
+    } else {
+      currentData <- currentData[currentData$MarriageSingle == 1,]
     }
     
-    currentBarPlot 
-  })
-  
-  #Self-updating labels
-  observe({
-    BarYaxisVar <- input$BarYaxis
+    if (input$Country == "England") {
+      currentData <- currentData[currentData$Country2 == 0 & currentData$Country3 == 0,]
+    } else if (input$Country == "Scottland") {
+      currentData <- currentData[currentData$Country2 == 1,]
+    } else {
+      currentData <- currentData[currentData$Country3 == 1,]
+    }
     
-    # Radio group ==============================================
-    BarRangeType_options <- list()
-    BarRangeType_options[[paste("Below/Above n", BarYaxisVar)]] <- "Below/Above"
-    BarRangeType_options[["Histogram"]] <- "Histogram"
+    if (input$Gender == "Female") {
+      currentData <- currentData[currentData$GenderMale == 0,]
+    } else {
+      currentData <- currentData[currentData$GenderMale == 1,]
+    }
+    fitted.AIS <- currentData$fitted[round(currentData$WeightedAIS, 2) == round(input$WeightedAIS, 2)]
+    currentVis <- plot_ly(x=~WeightedAIS, y=~fitted, data=currentData, type="scatter", mode="lines", name="Model") %>%
+      layout(xaxis = list(title = "Anti Immigration Score (Normalized)"),
+             yaxis = list(title = "Predicted probability of wanting to leave the EU"),
+             showlegend = FALSE) %>%
+      #horizontal line
+      add_lines(x=seq(-1, input$WeightedAIS, length.out=100), y=rep(fitted.AIS, 100), line=list(color="red"), text=paste0("Predicted Probability=",round(fitted.AIS, 3)), hoverinfo="text") %>%
+      #vertical line
+      add_lines(x=rep(input$WeightedAIS, 100), y=seq(0, fitted.AIS, length.out=100), line=list(color="red"), text="Anti Immigration Score", hoverinfo="text")
     
-    # Update text for range options to accomodate for Y-axis variable
-    # ex. Change "Incidents" to "Fatalities" in range options label when
-    #   Y-axis variable is changed from "Incidents" to "Fatalities"
-    updateRadioButtons(session, "BarRangeType", choices = BarRangeType_options,
-                       selected=input$BarRangeType)
+    currentVis
   })
-  
-  
-  #Reactivate Dataset
-  downloadFile <- reactive({
-    currentData <- filterDataReactive()
-  })
-  
-  # Downloadable csv of selected dataset ----
-  output$DownloadingData <- downloadHandler(
-    
-    filename = function() {
-      paste("currentData", ".csv", sep = "")
-    },
-    content = function(file) {
-      write.csv(downloadFile(), file, row.names = FALSE)
-    })
-  
   
 }
 # Run the app ----
